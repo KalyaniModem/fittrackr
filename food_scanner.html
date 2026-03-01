@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrackr — Food Scanner</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<script>
+  var _s = JSON.parse(localStorage.getItem("appSettings") || "{}");
+  if (_s.darkMode === false) document.body.classList.add("light-mode");
+  if (localStorage.getItem("isLoggedIn") !== "true") window.location.replace("index.html");
+</script>
+
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">FIT<span>TRACKR</span></div>
+    <nav>
+      <a class="nav-item" href="dashboard.html">          <span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="profile.html">            <span class="icon">👤</span> Profile</a>
+      <a class="nav-item" href="water_intake.html">       <span class="icon">💧</span> Water Intake</a>
+      <a class="nav-item" href="step.html">               <span class="icon">👣</span> Steps</a>
+      <a class="nav-item" href="calorie.html">            <span class="icon">🔥</span> Calories</a>
+      <a class="nav-item" href="heart_rate.html">         <span class="icon">❤️</span> Heart Rate</a>
+      <a class="nav-item" href="workout_planner.html">    <span class="icon">⚡</span> Smart Planner</a>
+      <a class="nav-item active" href="food_scanner.html"><span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item" href="report.html">             <span class="icon">📊</span> Report Card</a>
+      <a class="nav-item" href="settings.html">           <span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-logout" id="logoutBtn">⎋ Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- Header -->
+    <div class="page-header" style="margin-bottom:8px;">
+      <h1>🍎 FOOD SCANNER</h1>
+      <p>Search any food — get instant nutrition facts powered by real data</p>
+    </div>
+
+    <!-- Search bar — hero element -->
+    <div class="scanner-hero">
+      <div class="search-wrap">
+        <span class="search-icon-inner">🔍</span>
+        <input
+          type="text"
+          id="foodInput"
+          class="scanner-input"
+          placeholder="Type any food… e.g. banana, grilled chicken, rice"
+          autocomplete="off"
+        >
+        <button class="scan-btn" id="scanBtn" onclick="scanFood()">
+          <span id="scanBtnText">Scan Nutrition</span>
+        </button>
+      </div>
+
+      <!-- Quick search chips -->
+      <div class="quick-chips">
+        <span class="chip-label">Quick search:</span>
+        <button class="food-chip" onclick="quickScan('banana')">🍌 Banana</button>
+        <button class="food-chip" onclick="quickScan('chicken breast')">🍗 Chicken</button>
+        <button class="food-chip" onclick="quickScan('rice')">🍚 Rice</button>
+        <button class="food-chip" onclick="quickScan('egg')">🥚 Egg</button>
+        <button class="food-chip" onclick="quickScan('apple')">🍎 Apple</button>
+        <button class="food-chip" onclick="quickScan('milk')">🥛 Milk</button>
+        <button class="food-chip" onclick="quickScan('broccoli')">🥦 Broccoli</button>
+        <button class="food-chip" onclick="quickScan('almonds')">🥜 Almonds</button>
+      </div>
+    </div>
+
+    <div id="alertBox" class="alert" style="margin-bottom:16px;"></div>
+
+    <!-- Loading -->
+    <div class="food-loading" id="foodLoading">
+      <div class="food-spinner"></div>
+      <p>Fetching nutrition data…</p>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsSection" style="display:none;">
+
+      <!-- Main nutrition card -->
+      <div class="nutrition-card" id="nutritionCard">
+        <div class="nutrition-top">
+          <div>
+            <div class="food-name" id="foodName">--</div>
+            <div class="serving-info" id="servingInfo">Per 100g serving</div>
+          </div>
+          <div class="calorie-badge-wrap">
+            <div class="calorie-badge">
+              <div class="cal-num" id="calNum">--</div>
+              <div class="cal-unit">kcal</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Macro bars -->
+        <div class="macro-grid">
+          <div class="macro-item">
+            <div class="macro-top">
+              <span class="macro-icon">🥩</span>
+              <span class="macro-name">Protein</span>
+              <span class="macro-val" id="proteinVal">--g</span>
+            </div>
+            <div class="macro-track">
+              <div class="macro-fill" id="proteinBar" style="background:linear-gradient(90deg,#7c3aed,#a78bfa)"></div>
+            </div>
+          </div>
+          <div class="macro-item">
+            <div class="macro-top">
+              <span class="macro-icon">🌾</span>
+              <span class="macro-name">Carbs</span>
+              <span class="macro-val" id="carbVal">--g</span>
+            </div>
+            <div class="macro-track">
+              <div class="macro-fill" id="carbBar" style="background:linear-gradient(90deg,#f59e0b,#fcd34d)"></div>
+            </div>
+          </div>
+          <div class="macro-item">
+            <div class="macro-top">
+              <span class="macro-icon">🫒</span>
+              <span class="macro-name">Fat</span>
+              <span class="macro-val" id="fatVal">--g</span>
+            </div>
+            <div class="macro-track">
+              <div class="macro-fill" id="fatBar" style="background:linear-gradient(90deg,#ef4444,#fca5a5)"></div>
+            </div>
+          </div>
+          <div class="macro-item">
+            <div class="macro-top">
+              <span class="macro-icon">🌿</span>
+              <span class="macro-name">Fiber</span>
+              <span class="macro-val" id="fiberVal">--g</span>
+            </div>
+            <div class="macro-track">
+              <div class="macro-fill" id="fiberBar" style="background:linear-gradient(90deg,#10b981,#6ee7b7)"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Micro nutrients -->
+        <div class="micro-grid" id="microGrid"></div>
+
+        <!-- Health rating + tip -->
+        <div class="health-row">
+          <div class="health-score" id="healthScore">
+            <div class="hs-label">Health Score</div>
+            <div class="hs-value" id="hsValue">--</div>
+            <div class="hs-grade" id="hsGrade"></div>
+          </div>
+          <div class="health-tip" id="healthTip"></div>
+        </div>
+
+        <!-- Log to today button -->
+        <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap;">
+          <button class="btn btn-primary" style="flex:1;" onclick="logFood()">
+            ➕ Add to Today's Food Log
+          </button>
+          <button class="btn btn-secondary" onclick="clearResults()">
+            ✕ Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Macro donut + food log side by side -->
+      <div style="display:grid; grid-template-columns:1fr 1.4fr; gap:18px; margin-top:18px;">
+
+        <!-- Macro donut -->
+        <div class="card">
+          <div class="section-title" style="margin-bottom:16px;">MACRO BREAKDOWN</div>
+          <div style="position:relative; width:180px; margin:0 auto 16px;">
+            <canvas id="macroDonut" width="180" height="180"></canvas>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--text);" id="donutCals">--</div>
+              <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">kcal</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;" id="donutLegend"></div>
+        </div>
+
+        <!-- Today's food log -->
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div class="section-title">TODAY'S FOOD LOG</div>
+            <button class="btn btn-danger" style="padding:6px 12px;font-size:.8rem;" onclick="clearFoodLog()">Clear Log</button>
+          </div>
+          <div id="foodLogList">
+            <p style="color:var(--muted);font-size:.88rem;text-align:center;padding:20px 0;">No foods logged yet today.</p>
+          </div>
+          <div id="foodLogTotals" style="display:none;border-top:1px solid var(--border);margin-top:12px;padding-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);">
+              <span>Total Calories</span><strong id="logTotalCal" style="color:var(--text);">0 kcal</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);margin-top:6px;">
+              <span>Total Protein</span><strong id="logTotalPro" style="color:var(--text);">0g</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="emptyState" class="empty-state">
+      <div class="empty-icon">🍽️</div>
+      <h3>Search Any Food</h3>
+      <p>Type a food name above and hit <strong>Scan Nutrition</strong> to see detailed macros, calories, vitamins and a health score — all in seconds.</p>
+      <div class="feature-chips">
+        <div class="f-chip">📊 Macros breakdown</div>
+        <div class="f-chip">⚡ Instant results</div>
+        <div class="f-chip">💯 Health score</div>
+        <div class="f-chip">📝 Daily food log</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<style>
+/* ── Scanner hero ── */
+.scanner-hero {
+  background:    linear-gradient(135deg, rgba(124,58,237,0.08), rgba(245,158,11,0.05));
+  border:        1px solid rgba(124,58,237,0.2);
+  border-radius: 20px;
+  padding:       28px;
+  margin-bottom: 20px;
+}
+.search-wrap {
+  display:       flex;
+  align-items:   center;
+  gap:           12px;
+  background:    var(--surface);
+  border:        1.5px solid rgba(124,58,237,0.3);
+  border-radius: 14px;
+  padding:       8px 8px 8px 18px;
+  transition:    border-color .2s, box-shadow .2s;
+}
+.search-wrap:focus-within {
+  border-color: var(--primary);
+  box-shadow:   0 0 0 3px rgba(124,58,237,0.15);
+}
+.search-icon-inner { font-size:1.2rem; flex-shrink:0; }
+.scanner-input {
+  flex:        1;
+  background:  transparent;
+  border:      none;
+  outline:     none;
+  font-family: 'DM Sans',sans-serif;
+  font-size:   1rem;
+  color:       var(--text);
+}
+.scanner-input::placeholder { color:var(--muted); }
+.scan-btn {
+  padding:       12px 24px;
+  background:    linear-gradient(135deg,#7c3aed,#5b21b6);
+  color:         #fff;
+  border:        none;
+  border-radius: 10px;
+  font-family:   'DM Sans',sans-serif;
+  font-size:     .95rem;
+  font-weight:   700;
+  cursor:        pointer;
+  transition:    transform .2s, box-shadow .2s;
+  white-space:   nowrap;
+  box-shadow:    0 4px 16px rgba(124,58,237,0.4);
+}
+.scan-btn:hover    { transform:translateY(-1px); box-shadow:0 8px 24px rgba(124,58,237,0.5); }
+.scan-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+
+.quick-chips  { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.chip-label   { font-size:.8rem; color:var(--muted); font-weight:600; margin-right:4px; }
+.food-chip {
+  padding:       7px 14px;
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: 20px;
+  color:         var(--muted);
+  font-family:   'DM Sans',sans-serif;
+  font-size:     .82rem;
+  font-weight:   600;
+  cursor:        pointer;
+  transition:    all .2s;
+}
+.food-chip:hover { border-color:var(--primary); color:var(--text); background:rgba(124,58,237,0.08); transform:translateY(-1px); }
+
+/* ── Loading ── */
+.food-loading {
+  display:     none;
+  text-align:  center;
+  padding:     60px;
+  color:       var(--muted);
+}
+.food-loading.show { display:block; }
+.food-spinner {
+  width:            52px; height:52px;
+  border:           3px solid var(--surface2);
+  border-top-color: var(--primary);
+  border-radius:    50%;
+  margin:           0 auto 16px;
+  animation:        spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── Nutrition card ── */
+.nutrition-card {
+  background:    var(--surface);
+  border:        1px solid rgba(124,58,237,0.3);
+  border-radius: 20px;
+  padding:       28px;
+  box-shadow:    0 8px 40px rgba(0,0,0,0.3), 0 0 60px rgba(124,58,237,0.06);
+  animation:     fadeUp .4s ease both;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+.nutrition-top {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     flex-start;
+  margin-bottom:   24px;
+  padding-bottom:  20px;
+  border-bottom:   1px solid var(--border);
+}
+.food-name    { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:2px; color:var(--text); text-transform:capitalize; }
+.serving-info { color:var(--muted); font-size:.85rem; margin-top:4px; }
+
+.calorie-badge-wrap { flex-shrink:0; }
+.calorie-badge {
+  background:    linear-gradient(135deg,#7c3aed,#5b21b6);
+  border-radius: 16px;
+  padding:       16px 20px;
+  text-align:    center;
+  box-shadow:    0 8px 24px rgba(124,58,237,0.4);
+}
+.cal-num  { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; color:#fff; line-height:1; }
+.cal-unit { font-size:.75rem; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; }
+
+/* ── Macro bars ── */
+.macro-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+.macro-item { }
+.macro-top  { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:.88rem; }
+.macro-icon { font-size:1.1rem; }
+.macro-name { flex:1; color:var(--muted); font-weight:600; }
+.macro-val  { font-weight:700; color:var(--text); }
+.macro-track{ height:8px; background:rgba(255,255,255,0.06); border-radius:8px; overflow:hidden; }
+.macro-fill { height:100%; width:0%; border-radius:8px; transition:width 1s cubic-bezier(0.4,0,0.2,1); }
+
+/* ── Micro nutrients ── */
+.micro-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+  gap:                   10px;
+  margin-bottom:         20px;
+  padding:               16px;
+  background:            var(--surface2);
+  border-radius:         12px;
+}
+.micro-item {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  font-size:       .83rem;
+}
+.micro-label { color:var(--muted); }
+.micro-val   { font-weight:700; color:var(--text); }
+
+/* ── Health score ── */
+.health-row   { display:flex; gap:16px; align-items:stretch; }
+.health-score {
+  background:    var(--surface2);
+  border-radius: 14px;
+  padding:       18px 24px;
+  text-align:    center;
+  flex-shrink:   0;
+  min-width:     120px;
+}
+.hs-label { font-size:.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.hs-value { font-family:'Bebas Neue',sans-serif; font-size:2.8rem; line-height:1; color:var(--text); }
+.hs-grade { font-size:.8rem; font-weight:700; margin-top:4px; }
+.grade-a  { color:#10b981; }
+.grade-b  { color:#3b82f6; }
+.grade-c  { color:#f59e0b; }
+.grade-d  { color:#ef4444; }
+
+.health-tip {
+  flex:          1;
+  background:    var(--surface2);
+  border-radius: 14px;
+  padding:       18px;
+  font-size:     .88rem;
+  color:         var(--muted);
+  line-height:   1.7;
+  display:       flex;
+  align-items:   center;
+}
+
+/* ── Food log ── */
+.log-item {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  padding:         10px 0;
+  border-bottom:   1px solid rgba(255,255,255,0.04);
+  font-size:       .88rem;
+}
+.log-item:last-child { border-bottom:none; }
+.log-item-name  { font-weight:600; color:var(--text); text-transform:capitalize; }
+.log-item-meta  { color:var(--muted); font-size:.78rem; margin-top:2px; }
+.log-item-cal   { font-weight:700; color:var(--accent); font-size:.95rem; }
+.log-delete     { background:none; border:none; color:var(--muted); cursor:pointer; font-size:1rem; padding:2px 6px; transition:color .2s; }
+.log-delete:hover { color:var(--danger); }
+
+/* ── Empty state ── */
+.empty-state {
+  text-align:  center;
+  padding:     60px 30px;
+  color:       var(--muted);
+}
+.empty-icon  { font-size:4rem; margin-bottom:16px; }
+.empty-state h3 { font-family:'Bebas Neue',sans-serif; letter-spacing:2px; font-size:1.8rem; color:var(--text); margin-bottom:10px; }
+.empty-state p  { max-width:400px; margin:0 auto 24px; line-height:1.7; font-size:.9rem; }
+.feature-chips  { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
+.f-chip {
+  padding:       10px 16px;
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: 10px;
+  font-size:     .83rem;
+  color:         var(--muted);
+}
+</style>
+
+<script>
+const alertBox = document.getElementById("alertBox");
+function showAlert(msg, type="info") {
+  alertBox.textContent = msg;
+  alertBox.className   = `alert alert-${type} show`;
+  setTimeout(() => alertBox.classList.remove("show"), 4000);
+}
+
+// ── Food log stored in localStorage ──
+let foodLog = JSON.parse(localStorage.getItem("foodLog") || "[]");
+// Clear if it's a new day
+const today = new Date().toDateString();
+if (localStorage.getItem("foodLogDate") !== today) {
+  foodLog = [];
+  localStorage.setItem("foodLog", "[]");
+  localStorage.setItem("foodLogDate", today);
+}
+renderFoodLog();
+
+let currentFood = null;  // stores last scanned food
+let macroChart  = null;
+
+// ── Quick scan chips ──
+function quickScan(food) {
+  document.getElementById("foodInput").value = food;
+  scanFood();
+}
+
+// ── Main scan function ──
+async function scanFood() {
+  const query = document.getElementById("foodInput").value.trim();
+  if (!query) return showAlert("Please type a food name.", "error");
+
+  // UI states
+  document.getElementById("emptyState").style.display   = "none";
+  document.getElementById("resultsSection").style.display = "none";
+  document.getElementById("foodLoading").classList.add("show");
+  document.getElementById("scanBtn").disabled = true;
+  document.getElementById("scanBtnText").textContent = "Scanning…";
+
+  // ── Server proxies USDA API — key stays safe in .env ──
+  try {
+    let food = null;
+
+    // Step 1: Call our server (server.js securely calls USDA + Open Food Facts)
+    try {
+      const res  = await fetch(`http://localhost:3000/api/nutrition?query=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data.success && data.food && data.food.calories > 0) {
+        food = { ...data.food, source: data.source };
+      } else if (!data.success) {
+        console.warn("Server:", data.error);
+      }
+    } catch(e) {
+      // Server not running — silently fall through to built-in DB
+      console.warn("Server unreachable, using built-in DB");
+    }
+
+    // Step 2: Built-in database fallback (150+ foods, works fully offline)
+    if (!food) {
+      const builtIn = getFallbackNutrition(query);
+      if (builtIn) food = { ...builtIn, source: "Built-in DB" };
+    }
+
+    if (!food) {
+      throw new Error(`"${query}" not found. Try a simpler name — e.g. "chicken" instead of "chicken curry".`);
+    }
+
+    currentFood = food;
+    displayResults(currentFood);
+
+  } catch (err) {
+    showAlert(err.message || "Could not fetch nutrition data. Check internet connection.", "error");
+    document.getElementById("emptyState").style.display = "block";
+  } finally {
+    document.getElementById("foodLoading").classList.remove("show");
+    document.getElementById("scanBtn").disabled = false;
+    document.getElementById("scanBtnText").textContent = "Scan Nutrition";
+  }
+}
+
+// ── Built-in fallback database for 30+ common foods ──
+// This means the scanner works even without internet for popular foods
+function getFallbackNutrition(query) {
+  const DB = {
+    "banana":         { calories:89,  protein:1.1,  carbs:23,  fat:0.3,  fiber:2.6, sugar:12,  sodium:0.001 },
+    "apple":          { calories:52,  protein:0.3,  carbs:14,  fat:0.2,  fiber:2.4, sugar:10,  sodium:0.001 },
+    "egg":            { calories:155, protein:13,   carbs:1.1, fat:11,   fiber:0,   sugar:1.1, sodium:0.124 },
+    "chicken breast": { calories:165, protein:31,   carbs:0,   fat:3.6,  fiber:0,   sugar:0,   sodium:0.074 },
+    "rice":           { calories:130, protein:2.7,  carbs:28,  fat:0.3,  fiber:0.4, sugar:0,   sodium:0.001 },
+    "milk":           { calories:61,  protein:3.2,  carbs:4.8, fat:3.3,  fiber:0,   sugar:5.1, sodium:0.043 },
+    "broccoli":       { calories:34,  protein:2.8,  carbs:7,   fat:0.4,  fiber:2.6, sugar:1.7, sodium:0.033 },
+    "almonds":        { calories:579, protein:21,   carbs:22,  fat:50,   fiber:12,  sugar:4.4, sodium:0.001 },
+    "oats":           { calories:389, protein:17,   carbs:66,  fat:7,    fiber:11,  sugar:1,   sodium:0.002 },
+    "salmon":         { calories:208, protein:20,   carbs:0,   fat:13,   fiber:0,   sugar:0,   sodium:0.059 },
+    "bread":          { calories:265, protein:9,    carbs:49,  fat:3.2,  fiber:2.7, sugar:5,   sodium:0.491 },
+    "pasta":          { calories:131, protein:5,    carbs:25,  fat:1.1,  fiber:1.8, sugar:0.6, sodium:0.001 },
+    "orange":         { calories:47,  protein:0.9,  carbs:12,  fat:0.1,  fiber:2.4, sugar:9.4, sodium:0.001 },
+    "potato":         { calories:77,  protein:2,    carbs:17,  fat:0.1,  fiber:2.2, sugar:0.8, sodium:0.006 },
+    "yogurt":         { calories:59,  protein:10,   carbs:3.6, fat:0.4,  fiber:0,   sugar:3.2, sodium:0.036 },
+    "cheese":         { calories:402, protein:25,   carbs:1.3, fat:33,   fiber:0,   sugar:0.5, sodium:0.621 },
+    "tuna":           { calories:116, protein:26,   carbs:0,   fat:1,    fiber:0,   sugar:0,   sodium:0.332 },
+    "mango":          { calories:60,  protein:0.8,  carbs:15,  fat:0.4,  fiber:1.6, sugar:14,  sodium:0.001 },
+    "sweet potato":   { calories:86,  protein:1.6,  carbs:20,  fat:0.1,  fiber:3,   sugar:4.2, sodium:0.055 },
+    "spinach":        { calories:23,  protein:2.9,  carbs:3.6, fat:0.4,  fiber:2.2, sugar:0.4, sodium:0.079 },
+    "avocado":        { calories:160, protein:2,    carbs:9,   fat:15,   fiber:7,   sugar:0.7, sodium:0.007 },
+    "peanut butter":  { calories:588, protein:25,   carbs:20,  fat:50,   fiber:6,   sugar:9,   sodium:0.429 },
+    "idli":           { calories:58,  protein:2,    carbs:12,  fat:0.2,  fiber:0.5, sugar:0.5, sodium:0.185 },
+    "dosa":           { calories:168, protein:3.9,  carbs:26,  fat:5,    fiber:1,   sugar:1,   sodium:0.240 },
+    "dal":            { calories:116, protein:9,    carbs:20,  fat:0.4,  fiber:8,   sugar:1,   sodium:0.004 },
+    "roti":           { calories:297, protein:11,   carbs:61,  fat:1.2,  fiber:2.7, sugar:0.4, sodium:0.002 },
+    "paneer":         { calories:265, protein:18,   carbs:1.2, fat:21,   fiber:0,   sugar:1,   sodium:0.004 },
+    "sambar":         { calories:39,  protein:2,    carbs:6,   fat:0.8,  fiber:2,   sugar:1,   sodium:0.350 },
+  };
+
+  const key = Object.keys(DB).find(k =>
+    query.toLowerCase().includes(k) || k.includes(query.toLowerCase())
+  );
+  if (!key) return null;
+  return { name: key, ...DB[key], saturated: (DB[key].fat * 0.3).toFixed(1) };
+}
+
+// ── Display results ──
+function displayResults(food) {
+  document.getElementById("foodName").textContent    = food.name;
+  document.getElementById("calNum").textContent      = food.calories;
+  document.getElementById("proteinVal").textContent  = food.protein + "g";
+  document.getElementById("carbVal").textContent     = food.carbs + "g";
+  document.getElementById("fatVal").textContent      = food.fat + "g";
+  document.getElementById("fiberVal").textContent    = food.fiber + "g";
+  document.getElementById("donutCals").textContent   = food.calories;
+
+  // Macro bars — animate to % of 100g reference
+  setTimeout(() => {
+    document.getElementById("proteinBar").style.width = Math.min(food.protein * 2.5, 100) + "%";
+    document.getElementById("carbBar").style.width    = Math.min(food.carbs,         100) + "%";
+    document.getElementById("fatBar").style.width     = Math.min(food.fat * 2,       100) + "%";
+    document.getElementById("fiberBar").style.width   = Math.min(food.fiber * 5,     100) + "%";
+  }, 100);
+
+  // Micro nutrients grid
+  document.getElementById("microGrid").innerHTML = `
+    <div class="micro-item"><span class="micro-label">🍬 Sugar</span><span class="micro-val">${food.sugar}g</span></div>
+    <div class="micro-item"><span class="micro-label">🧂 Sodium</span><span class="micro-val">${Math.round(food.sodium * 1000)}mg</span></div>
+    <div class="micro-item"><span class="micro-label">🫀 Sat. Fat</span><span class="micro-val">${food.saturated}g</span></div>
+    <div class="micro-item"><span class="micro-label">⚡ Energy</span><span class="micro-val">${Math.round(food.calories * 4.184)} kJ</span></div>
+  `;
+
+  // Health score calculation (0–100)
+  let score = 100;
+  if (food.calories > 400) score -= 20;
+  if (food.calories > 600) score -= 10;
+  if (food.fat > 30)       score -= 15;
+  if (food.sugar > 20)     score -= 15;
+  if (food.sodium > 0.5)   score -= 10;
+  if (food.protein > 15)   score += 10;
+  if (food.fiber > 5)      score += 10;
+  score = Math.max(10, Math.min(100, score));
+
+  const grade = score >= 80 ? "A" : score >= 65 ? "B" : score >= 50 ? "C" : "D";
+  const gradeClass = { A:"grade-a", B:"grade-b", C:"grade-c", D:"grade-d" }[grade];
+  const gradeColor = { A:"#10b981", B:"#3b82f6", C:"#f59e0b", D:"#ef4444" }[grade];
+
+  document.getElementById("hsValue").textContent = score;
+  document.getElementById("hsGrade").textContent = `Grade ${grade}`;
+  document.getElementById("hsGrade").className   = `hs-grade ${gradeClass}`;
+  document.getElementById("hsValue").style.color = gradeColor;
+
+  // Health tip based on food profile
+  const tips = {
+    A: `✅ <strong style="color:#10b981">${food.name}</strong> is an excellent nutritional choice! ${food.protein > 10 ? "Great protein source." : ""} ${food.fiber > 3 ? "High in fiber for digestive health." : ""}`,
+    B: `👍 <strong style="color:#3b82f6">${food.name}</strong> is a solid choice for a balanced diet. ${food.fat > 15 ? "Moderate fat content — watch portion size." : ""}`,
+    C: `⚠️ <strong style="color:#f59e0b">${food.name}</strong> is okay in moderation. ${food.sugar > 15 ? "High sugar — pair with protein to slow absorption." : food.fat > 20 ? "Higher fat content — keep portions controlled." : ""}`,
+    D: `🚨 <strong style="color:#ef4444">${food.name}</strong> is best consumed sparingly. Consider healthier alternatives or very small portions.`
+  };
+  document.getElementById("healthTip").innerHTML = tips[grade];
+
+  // Macro donut chart
+  const total = food.protein * 4 + food.carbs * 4 + food.fat * 9;
+  const ctx   = document.getElementById("macroDonut").getContext("2d");
+  if (macroChart) macroChart.destroy();
+  macroChart = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["Protein","Carbs","Fat"],
+      datasets: [{
+        data:            [food.protein * 4, food.carbs * 4, food.fat * 9],
+        backgroundColor: ["#7c3aed","#f59e0b","#ef4444"],
+        borderWidth:     0,
+        hoverOffset:     8
+      }]
+    },
+    options: {
+      cutout:    "68%",
+      animation: { duration:800 },
+      plugins:   {
+        legend: { display:false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${Math.round(ctx.raw / total * 100)}% (${ctx.raw} kcal)`
+          }
+        }
+      }
+    }
+  });
+
+  // Donut legend
+  document.getElementById("donutLegend").innerHTML = [
+    { label:"Protein", val:`${food.protein}g`, color:"#7c3aed", pct: total ? Math.round(food.protein*4/total*100) : 0 },
+    { label:"Carbs",   val:`${food.carbs}g`,   color:"#f59e0b", pct: total ? Math.round(food.carbs*4/total*100)   : 0 },
+    { label:"Fat",     val:`${food.fat}g`,     color:"#ef4444", pct: total ? Math.round(food.fat*9/total*100)     : 0 }
+  ].map(m => `
+    <div style="display:flex;align-items:center;justify-content:space-between;font-size:.83rem;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:${m.color};flex-shrink:0;"></div>
+        <span style="color:var(--muted);">${m.label}</span>
+      </div>
+      <span style="font-weight:700;color:var(--text);">${m.val} <span style="color:var(--muted);font-weight:400;">(${m.pct}%)</span></span>
+    </div>
+  `).join("");
+
+  document.getElementById("resultsSection").style.display = "block";
+  document.getElementById("emptyState").style.display     = "none";
+}
+
+// ── Log food to today's diary ──
+function logFood() {
+  if (!currentFood) return;
+  foodLog.push({ ...currentFood, loggedAt: new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) });
+  localStorage.setItem("foodLog", JSON.stringify(foodLog));
+  renderFoodLog();
+  showAlert(`${currentFood.name} added to today's food log! ✓`, "success");
+}
+
+function renderFoodLog() {
+  const list = document.getElementById("foodLogList");
+  const tots = document.getElementById("foodLogTotals");
+  if (!foodLog.length) {
+    list.innerHTML = `<p style="color:var(--muted);font-size:.88rem;text-align:center;padding:20px 0;">No foods logged yet today.</p>`;
+    if (tots) tots.style.display = "none";
+    return;
+  }
+  list.innerHTML = foodLog.map((f,i) => `
+    <div class="log-item">
+      <div>
+        <div class="log-item-name">${f.name}</div>
+        <div class="log-item-meta">${f.loggedAt} · P:${f.protein}g C:${f.carbs}g F:${f.fat}g</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="log-item-cal">${f.calories} kcal</span>
+        <button class="log-delete" onclick="deleteLogItem(${i})">✕</button>
+      </div>
+    </div>
+  `).join("");
+
+  const totalCal = foodLog.reduce((s,f) => s + f.calories, 0);
+  const totalPro = foodLog.reduce((s,f) => s + f.protein, 0).toFixed(1);
+  if (tots) {
+    tots.style.display = "block";
+    document.getElementById("logTotalCal").textContent = totalCal + " kcal";
+    document.getElementById("logTotalPro").textContent = totalPro + "g";
+  }
+}
+
+function deleteLogItem(i) {
+  foodLog.splice(i, 1);
+  localStorage.setItem("foodLog", JSON.stringify(foodLog));
+  renderFoodLog();
+}
+
+function clearFoodLog() {
+  if (!confirm("Clear today's food log?")) return;
+  foodLog = [];
+  localStorage.setItem("foodLog", "[]");
+  renderFoodLog();
+}
+
+function clearResults() {
+  document.getElementById("resultsSection").style.display = "none";
+  document.getElementById("emptyState").style.display     = "block";
+  document.getElementById("foodInput").value = "";
+  currentFood = null;
+}
+
+// Enter key to scan
+document.getElementById("foodInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") scanFood();
+});
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.setItem("isLoggedIn","false");
+  window.location.href = "index.html";
+});
+</script>
+</body>
+</html>

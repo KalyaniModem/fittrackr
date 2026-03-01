@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrackr — Water Intake</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body><script>
+  var _s = JSON.parse(localStorage.getItem("appSettings") || "{}");
+  if (_s.darkMode === false) document.body.classList.add("light-mode");
+</script>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">FIT<span>TRACKR</span></div>
+    <nav>
+      <a class="nav-item" href="dashboard.html">        <span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="profile.html">          <span class="icon">👤</span> Profile</a>
+      <a class="nav-item active" href="water_intake.html"><span class="icon">💧</span> Water Intake</a>
+      <a class="nav-item" href="step.html">             <span class="icon">👣</span> Steps</a>
+      <a class="nav-item" href="calorie.html">          <span class="icon">🔥</span> Calories</a>
+      <a class="nav-item" href="heart_rate.html">       <span class="icon">❤️</span> Heart Rate</a>
+      <a class="nav-item" href="workout_planner.html">          <span class="icon">🏋️</span> Workouts</a>
+     <a class="nav-item" href="food_scanner.html">   <span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item" href="report.html">           <span class="icon">📊</span> Report Card</a>
+
+      <a class="nav-item" href="settings.html">         <span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-logout" id="logoutBtn">⎋ Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>💧 WATER INTAKE</h1>
+      <p>Stay hydrated — track your daily water consumption</p>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <!-- Stats -->
+    <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:24px;">
+      <div class="stat-card blue">
+        <div class="stat-icon">💧</div>
+        <div class="stat-value" id="totalWaterDisplay">0</div>
+        <div class="stat-label">ml consumed today</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">🎯</div>
+        <div class="stat-value" id="goalDisplay">2000</div>
+        <div class="stat-label">Daily goal (ml)</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value" id="remainingDisplay">--</div>
+        <div class="stat-label">ml remaining</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;">
+      <!-- Progress + glass -->
+      <div class="card">
+        <div class="section-title">DAILY PROGRESS</div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>Hydration</span><span id="pctLabel">0%</span></div>
+          <div class="progress-bar"><div class="progress-fill blue" id="waterProgressFill"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:24px;margin-top:20px;">
+          <div class="water-glass">
+            <div id="water-glass-fill"></div>
+          </div>
+          <div style="color:var(--muted);font-size:.85rem;">
+            <p>💡 Recommended: 8 glasses / day</p>
+            <p style="margin-top:8px;">1 glass ≈ 250 ml</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add water + quick buttons -->
+      <div class="card">
+        <div class="section-title">LOG WATER</div>
+        <div class="form-group">
+          <label class="form-label">Amount (ml)</label>
+          <input type="number" id="waterInput" class="form-input" placeholder="e.g. 250" min="1">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+          <button class="btn btn-success" id="addWaterBtn">+ Add</button>
+          <button class="btn btn-danger" id="clearWaterBtn">↺ Reset</button>
+        </div>
+        <div class="section-title" style="font-size:.9rem;margin-bottom:10px;">QUICK ADD</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-secondary quick-add" data-ml="150">150 ml</button>
+          <button class="btn btn-secondary quick-add" data-ml="250">250 ml</button>
+          <button class="btn btn-secondary quick-add" data-ml="500">500 ml</button>
+          <button class="btn btn-secondary quick-add" data-ml="750">750 ml</button>
+        </div>
+
+        <div style="margin-top:20px;">
+          <div class="section-title" style="font-size:.9rem;margin-bottom:10px;">SET DAILY GOAL</div>
+          <div style="display:flex;gap:10px;">
+            <input type="number" id="goalInput" class="form-input" placeholder="ml (min 500)" min="500" style="flex:1;">
+            <button class="btn btn-warning" id="setGoalBtn">Set</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+      <div class="section-title">INTAKE HISTORY</div>
+      <ul class="history-list" id="waterHistoryList">
+        <li class="history-item" style="color:var(--muted);justify-content:center;">No entries yet</li>
+      </ul>
+    </div>
+  </main>
+</div>
+
+<script>
+  if (localStorage.getItem("isLoggedIn") !== "true") window.location.href = "index.html";
+
+  const username = localStorage.getItem("username");
+  const alertBox = document.getElementById("alertBox");
+  function showAlert(msg, type="info") {
+    alertBox.textContent = msg;
+    alertBox.className = `alert alert-${type} show`;
+    setTimeout(() => alertBox.classList.remove("show"), 3500);
+  }
+
+  let totalWater = 0;
+  let goal       = 2000;
+  let history    = [];
+
+  async function loadData() {
+    try {
+      const res  = await fetch(`http://localhost:3000/get-water-intake?username=${username}`);
+      const data = await res.json();
+      if (data.success) {
+        totalWater = data.waterIntake || 0;
+        goal       = data.goal        || 2000;
+        history    = data.history     || [];
+      }
+    } catch {
+      // fallback to localStorage
+      totalWater = parseInt(localStorage.getItem("waterTotal"))  || 0;
+      goal       = parseInt(localStorage.getItem("waterGoal"))   || 2000;
+      history    = JSON.parse(localStorage.getItem("waterHistory") || "[]");
+    }
+    updateUI();
+  }
+
+  async function saveData() {
+    localStorage.setItem("waterTotal",   totalWater);
+    localStorage.setItem("waterGoal",    goal);
+    localStorage.setItem("waterHistory", JSON.stringify(history));
+    try {
+      await fetch("http://localhost:3000/save-water-intake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, totalWater, goal, history })
+      });
+    } catch { /* silent fail, data is in localStorage */ }
+  }
+
+  function updateUI() {
+    document.getElementById("totalWaterDisplay").textContent = totalWater + " ml";
+    document.getElementById("goalDisplay").textContent       = goal + " ml";
+    const remaining = Math.max(goal - totalWater, 0);
+    document.getElementById("remainingDisplay").textContent  = remaining + " ml";
+
+    const pct = Math.min(Math.round((totalWater / goal) * 100), 100);
+    document.getElementById("waterProgressFill").style.width = pct + "%";
+    document.getElementById("water-glass-fill").style.height = pct + "%";
+    document.getElementById("pctLabel").textContent          = pct + "%";
+
+    const list = document.getElementById("waterHistoryList");
+    if (!history.length) {
+      list.innerHTML = `<li class="history-item" style="color:var(--muted);justify-content:center;">No entries yet</li>`;
+    } else {
+      list.innerHTML = history.slice().reverse().map((e,i) =>
+        `<li class="history-item"><span>Entry ${history.length - i}</span><span>${e}</span></li>`
+      ).join("");
+    }
+  }
+
+  function addWater(ml) {
+    if (!ml || ml < 1) return showAlert("Enter a valid amount.", "error");
+    totalWater += ml;
+    history.push(`${ml} ml — ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`);
+    saveData();
+    updateUI();
+    showAlert(`+${ml} ml added! 💧`, "success");
+  }
+
+  document.getElementById("addWaterBtn").addEventListener("click", () => {
+    addWater(parseInt(document.getElementById("waterInput").value));
+    document.getElementById("waterInput").value = "";
+  });
+
+  document.querySelectorAll(".quick-add").forEach(btn => {
+    btn.addEventListener("click", () => addWater(parseInt(btn.dataset.ml)));
+  });
+
+  document.getElementById("clearWaterBtn").addEventListener("click", () => {
+    if (!confirm("Reset today's water intake?")) return;
+    totalWater = 0; history = [];
+    saveData(); updateUI();
+    showAlert("Water intake reset.", "info");
+  });
+
+  document.getElementById("setGoalBtn").addEventListener("click", () => {
+    const val = parseInt(document.getElementById("goalInput").value);
+    if (!val || val < 500) return showAlert("Minimum goal is 500 ml.", "error");
+    goal = val;
+    saveData(); updateUI();
+    showAlert(`Daily goal set to ${goal} ml.`, "success");
+    document.getElementById("goalInput").value = "";
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.setItem("isLoggedIn","false");
+    window.location.href = "index.html";
+  });
+
+  loadData();
+</script>
+</body>
+</html>

@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrackr — Fitness Report Card</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<script>
+  var _s = JSON.parse(localStorage.getItem("appSettings") || "{}");
+  if (_s.darkMode === false) document.body.classList.add("light-mode");
+  if (localStorage.getItem("isLoggedIn") !== "true") window.location.replace("index.html");
+</script>
+
+<div class="app-shell" id="appShell">
+
+  <!-- Sidebar — hidden during print -->
+  <aside class="sidebar no-print">
+    <div class="sidebar-logo">FIT<span>TRACKR</span></div>
+    <nav>
+      <a class="nav-item" href="dashboard.html">         <span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="profile.html">           <span class="icon">👤</span> Profile</a>
+      <a class="nav-item" href="water_intake.html">      <span class="icon">💧</span> Water Intake</a>
+      <a class="nav-item" href="step.html">              <span class="icon">👣</span> Steps</a>
+      <a class="nav-item" href="calorie.html">           <span class="icon">🔥</span> Calories</a>
+      <a class="nav-item" href="heart_rate.html">        <span class="icon">❤️</span> Heart Rate</a>
+      <a class="nav-item" href="workout_planner.html">   <span class="icon">⚡</span> Smart Planner</a>
+      <a class="nav-item" href="food_scanner.html">      <span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item active" href="report.html">     <span class="icon">📊</span> Report Card</a>
+      <a class="nav-item" href="settings.html">          <span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-logout" id="logoutBtn">⎋ Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- Action bar -->
+    <div class="action-bar no-print">
+      <div>
+        <h1 style="font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:2rem;background:linear-gradient(135deg,#f1f5f9,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">📊 WEEKLY REPORT CARD</h1>
+        <p style="color:var(--muted);margin-top:4px;font-size:.9rem;">Your complete fitness summary — export as PDF to share</p>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <button class="btn btn-secondary" onclick="generateReport()">🔄 Refresh</button>
+        <button class="btn btn-primary"   onclick="printReport()">🖨️ Export PDF</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         THE REPORT CARD — printable section
+         ══════════════════════════════════════ -->
+    <div id="reportCard" class="report-card">
+
+      <!-- Report header -->
+      <div class="report-header">
+        <div class="report-logo-section">
+          <div class="report-logo">FIT<span>TRACKR</span></div>
+          <div class="report-subtitle">Weekly Fitness Report</div>
+        </div>
+        <div class="report-meta">
+          <div class="report-user" id="reportUser">--</div>
+          <div class="report-date" id="reportDate">--</div>
+          <div class="report-week" id="reportWeek">--</div>
+        </div>
+        <!-- Overall grade badge -->
+        <div class="overall-grade" id="overallGradeBadge">
+          <div class="og-label">OVERALL</div>
+          <div class="og-grade" id="ogGrade">--</div>
+          <div class="og-desc"  id="ogDesc">--</div>
+        </div>
+      </div>
+
+      <!-- ── 5 Category grade cards ── -->
+      <div class="grade-cards" id="gradeCards"></div>
+
+      <!-- ── Stats table + chart row ── -->
+      <div class="report-body">
+
+        <!-- Detailed stats table -->
+        <div class="report-section">
+          <div class="rs-title">📈 THIS WEEK'S NUMBERS</div>
+          <table class="stats-table" id="statsTable">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Your Value</th>
+                <th>Goal</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="statsTableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Radar chart -->
+        <div class="report-section radar-section">
+          <div class="rs-title">🕸️ FITNESS RADAR</div>
+          <canvas id="radarChart" width="280" height="280"></canvas>
+        </div>
+      </div>
+
+      <!-- ── Activity bar chart ── -->
+      <div class="report-section" style="margin-top:20px;">
+        <div class="rs-title">📅 7-DAY ACTIVITY OVERVIEW</div>
+        <canvas id="activityChart" height="90"></canvas>
+      </div>
+
+      <!-- ── Achievements ── -->
+      <div class="report-section" style="margin-top:20px;">
+        <div class="rs-title">🏅 ACHIEVEMENTS THIS WEEK</div>
+        <div class="achievements-grid" id="achievementsGrid"></div>
+      </div>
+
+      <!-- ── Smart recommendations ── -->
+      <div class="report-section recs-section" style="margin-top:20px;">
+        <div class="rs-title">💡 PERSONALISED RECOMMENDATIONS</div>
+        <div class="recs-grid" id="recsGrid"></div>
+      </div>
+
+      <!-- ── Report footer ── -->
+      <div class="report-footer">
+        <div>Generated by <strong>FitTrackr</strong> — Your Personal Fitness Dashboard</div>
+        <div id="footerDate"></div>
+      </div>
+
+    </div>
+    <!-- end #reportCard -->
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════
+     STYLES
+     ══════════════════════════════════════ -->
+<style>
+/* ── Screen layout ── */
+.action-bar {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  margin-bottom:   24px;
+  padding-bottom:  20px;
+  border-bottom:   1px solid var(--border);
+}
+
+/* ── Report card — screen view ── */
+.report-card {
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: 20px;
+  padding:       36px;
+  box-shadow:    0 8px 48px rgba(0,0,0,0.35);
+}
+
+/* ── Report header ── */
+.report-header {
+  display:         flex;
+  align-items:     flex-start;
+  justify-content: space-between;
+  padding-bottom:  28px;
+  margin-bottom:   28px;
+  border-bottom:   2px solid var(--border);
+  gap:             20px;
+  flex-wrap:       wrap;
+}
+.report-logo {
+  font-family:    'Bebas Neue', sans-serif;
+  font-size:      2.4rem;
+  letter-spacing: 4px;
+  color:          var(--text);
+}
+.report-logo span   { color: var(--primary); }
+.report-subtitle    { color:var(--muted); font-size:.85rem; letter-spacing:2px; text-transform:uppercase; margin-top:4px; }
+.report-user        { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:2px; color:var(--text); }
+.report-date        { color:var(--muted); font-size:.85rem; margin-top:4px; }
+.report-week        { color:var(--primary); font-size:.82rem; font-weight:600; margin-top:2px; }
+
+.overall-grade {
+  text-align:    center;
+  padding:       16px 28px;
+  border-radius: 16px;
+  border:        2px solid var(--primary);
+  background:    rgba(124,58,237,0.08);
+}
+.og-label  { font-size:.7rem; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+.og-grade  { font-family:'Bebas Neue',sans-serif; font-size:3.5rem; line-height:1; }
+.og-desc   { font-size:.78rem; color:var(--muted); margin-top:4px; font-weight:600; }
+
+/* ── Grade cards ── */
+.grade-cards {
+  display:               grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap:                   12px;
+  margin-bottom:         24px;
+}
+.grade-card {
+  background:    var(--surface2);
+  border-radius: 14px;
+  padding:       18px 14px;
+  text-align:    center;
+  border:        1px solid var(--border);
+  transition:    transform .2s, border-color .2s;
+}
+.grade-card:hover { transform:translateY(-3px); }
+.gc-icon  { font-size:1.8rem; margin-bottom:8px; }
+.gc-cat   { font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin-bottom:8px; }
+.gc-grade { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; line-height:1; }
+.gc-score { font-size:.75rem; color:var(--muted); margin-top:4px; }
+.gc-bar   { height:4px; background:rgba(255,255,255,0.08); border-radius:4px; margin-top:10px; overflow:hidden; }
+.gc-fill  { height:100%; border-radius:4px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+
+/* Grade colours */
+.grade-A { color:#10b981; }
+.grade-B { color:#3b82f6; }
+.grade-C { color:#f59e0b; }
+.grade-D { color:#ef4444; }
+.grade-F { color:#94a3b8; }
+
+/* ── Report body ── */
+.report-body {
+  display:               grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap:                   20px;
+  align-items:           start;
+}
+.report-section { }
+.rs-title {
+  font-family:    'Bebas Neue',sans-serif;
+  letter-spacing: 1.5px;
+  font-size:      1rem;
+  color:          var(--text);
+  margin-bottom:  14px;
+  padding-bottom: 8px;
+  border-bottom:  1px solid var(--border);
+}
+
+/* ── Stats table ── */
+.stats-table { width:100%; border-collapse:collapse; }
+.stats-table th {
+  text-align:    left;
+  padding:       10px 12px;
+  font-size:     .75rem;
+  color:         var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.8px;
+  border-bottom: 1px solid var(--border);
+}
+.stats-table td {
+  padding:     11px 12px;
+  font-size:   .88rem;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  color:       var(--text);
+}
+.stats-table tr:last-child td { border-bottom:none; }
+.stats-table tr:hover td      { background:rgba(124,58,237,0.04); }
+.status-pill {
+  padding:       3px 10px;
+  border-radius: 20px;
+  font-size:     .75rem;
+  font-weight:   700;
+}
+.status-met     { background:rgba(16,185,129,0.15); color:#6ee7b7; }
+.status-close   { background:rgba(245,158,11,0.15); color:#fcd34d; }
+.status-missed  { background:rgba(239,68,68,0.15);  color:#fca5a5; }
+.status-nodata  { background:rgba(148,163,184,0.15);color:#94a3b8; }
+
+/* ── Radar chart ── */
+.radar-section { display:flex; flex-direction:column; align-items:center; }
+
+/* ── Achievements ── */
+.achievements-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+  gap:                   12px;
+}
+.achievement {
+  display:       flex;
+  align-items:   center;
+  gap:           12px;
+  padding:       14px;
+  background:    var(--surface2);
+  border-radius: 12px;
+  border:        1px solid var(--border);
+}
+.ach-icon  { font-size:1.8rem; flex-shrink:0; }
+.ach-title { font-weight:700; font-size:.88rem; color:var(--text); }
+.ach-desc  { font-size:.78rem; color:var(--muted); margin-top:2px; }
+.ach-locked { opacity:.35; filter:grayscale(1); }
+
+/* ── Recommendations ── */
+.recs-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px,1fr));
+  gap:                   12px;
+}
+.rec-card {
+  padding:       16px;
+  border-radius: 12px;
+  border:        1px solid var(--border);
+  background:    var(--surface2);
+}
+.rec-priority { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.rec-text     { font-size:.86rem; color:var(--muted); line-height:1.6; }
+.priority-high   { color:#ef4444; }
+.priority-medium { color:#f59e0b; }
+.priority-low    { color:#10b981; }
+
+/* ── Report footer ── */
+.report-footer {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  margin-top:      28px;
+  padding-top:     20px;
+  border-top:      1px solid var(--border);
+  font-size:       .8rem;
+  color:           var(--muted);
+}
+
+/* ══════════════════════════
+   PRINT STYLES
+   Everything becomes clean
+   black-on-white for PDF
+   ══════════════════════════ */
+@media print {
+  * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+  .no-print  { display:none !important; }
+  .sidebar   { display:none !important; }
+  body       { background:#fff !important; }
+
+  .app-shell    { display:block !important; }
+  .main-content { margin:0 !important; padding:0 !important; max-width:100% !important; }
+
+  .report-card {
+    border:     none !important;
+    box-shadow: none !important;
+    padding:    20px !important;
+    background: #fff !important;
+    color:      #1a1a2e !important;
+  }
+  .report-logo,
+  .report-user,
+  .rs-title,
+  .gc-cat,
+  .stats-table th,
+  .stats-table td,
+  .ach-title,
+  .rec-text      { color:#1a1a2e !important; }
+  .report-date,
+  .og-label,
+  .gc-score,
+  .report-footer { color:#64748b !important; }
+  .report-header { border-bottom-color:#e2e8f0 !important; }
+  .stats-table th,
+  .rs-title       { border-bottom-color:#e2e8f0 !important; }
+  .grade-card,
+  .achievement,
+  .rec-card       { background:#f8fafc !important; border-color:#e2e8f0 !important; }
+  .overall-grade  { background:#f3f0ff !important; border-color:#7c3aed !important; }
+  .report-body    { grid-template-columns:1.8fr 1fr !important; }
+  canvas          { max-width:100% !important; }
+}
+</style>
+
+<!-- ══════════════════════════════════════
+     JAVASCRIPT — REPORT GENERATION ENGINE
+     ══════════════════════════════════════ -->
+<script>
+// ── Read all data from localStorage ──
+const username    = localStorage.getItem("username")      || "Athlete";
+const calories    = parseFloat(localStorage.getItem("calorieCount"))  || 0;
+const steps       = parseInt(localStorage.getItem("stepCount"))       || 0;
+const water       = parseInt(localStorage.getItem("waterTotal"))      || 0;
+const bpm         = parseInt(localStorage.getItem("lastBPM"))         || 0;
+const calGoal     = parseInt(localStorage.getItem("calorieGoal"))     || 500;
+const waterGoal   = parseInt(localStorage.getItem("waterGoal"))       || 2000;
+const streak      = parseInt(localStorage.getItem("streak"))          || 0;
+const calHistory  = JSON.parse(localStorage.getItem("calorieHistory") || "[]").slice(-7);
+const stepHistory = JSON.parse(localStorage.getItem("stepHistory")    || "[]").slice(-7);
+const foodLog     = JSON.parse(localStorage.getItem("foodLog")        || "[]");
+const planData    = localStorage.getItem("lastWorkoutPlan");
+
+// ── Grade helper ──
+function getGrade(score) {
+  if (score >= 90) return { grade:"A+", color:"#10b981", class:"grade-A" };
+  if (score >= 80) return { grade:"A",  color:"#10b981", class:"grade-A" };
+  if (score >= 70) return { grade:"B+", color:"#3b82f6", class:"grade-B" };
+  if (score >= 60) return { grade:"B",  color:"#3b82f6", class:"grade-B" };
+  if (score >= 50) return { grade:"C",  color:"#f59e0b", class:"grade-C" };
+  if (score >= 35) return { grade:"D",  color:"#ef4444", class:"grade-D" };
+  return               { grade:"F",  color:"#94a3b8", class:"grade-F" };
+}
+
+// ── Score calculations ──
+function calcScores() {
+  // Calories score (0–100) — did they hit their burn goal?
+  const calScore   = calories  ? Math.min(Math.round((calories  / calGoal)  * 100), 100) : 0;
+  // Steps score — goal is 10,000
+  const stepScore  = steps     ? Math.min(Math.round((steps     / 10000)    * 100), 100) : 0;
+  // Hydration score
+  const waterScore = water     ? Math.min(Math.round((water     / waterGoal)* 100), 100) : 0;
+  // Heart rate score — optimal is 60–100 bpm resting
+  const bpmScore   = bpm
+    ? (bpm >= 60 && bpm <= 100 ? 100 : bpm < 60 ? 80 : bpm <= 120 ? 70 : 50)
+    : 0;
+  // Activity consistency — based on streak
+  const consistScore = Math.min(streak * 15, 100);
+  // Nutrition score — based on foods logged
+  const nutritionScore = foodLog.length >= 3 ? 90 : foodLog.length >= 1 ? 60 : 20;
+
+  // Overall = weighted average
+  const overall = Math.round(
+    calScore   * 0.20 +
+    stepScore  * 0.25 +
+    waterScore * 0.20 +
+    bpmScore   * 0.15 +
+    consistScore * 0.20
+  );
+
+  return { calScore, stepScore, waterScore, bpmScore, consistScore, nutritionScore, overall };
+}
+
+// ── Main report generation function ──
+function generateReport() {
+  const scores = calcScores();
+  const now    = new Date();
+
+  // ── Header info ──
+  document.getElementById("reportUser").textContent = username.toUpperCase();
+  document.getElementById("reportDate").textContent =
+    now.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+  document.getElementById("reportWeek").textContent =
+    `Week of ${new Date(now - 6*86400000).toLocaleDateString("en-US",{month:"short",day:"numeric"})} – ${now.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}`;
+  document.getElementById("footerDate").textContent =
+    `Generated on ${now.toLocaleString()}`;
+
+  // ── Overall grade ──
+  const og = getGrade(scores.overall);
+  const ogDescMap = {
+    "A+":"Outstanding Performance", "A":"Excellent Work",
+    "B+":"Great Progress",          "B":"Good Effort",
+    "C":"Keep Pushing",             "D":"Needs Improvement", "F":"Just Getting Started"
+  };
+  document.getElementById("ogGrade").textContent       = og.grade;
+  document.getElementById("ogGrade").style.color       = og.color;
+  document.getElementById("ogDesc").textContent        = ogDescMap[og.grade] || "Keep Going!";
+  document.getElementById("overallGradeBadge").style.borderColor = og.color;
+
+  // ── 5 Category grade cards ──
+  const categories = [
+    { icon:"🔥", label:"Calories",    score:scores.calScore,    desc:`${calories || "--"} kcal burned` },
+    { icon:"👣", label:"Steps",       score:scores.stepScore,   desc:`${steps ? steps.toLocaleString() : "--"} steps` },
+    { icon:"💧", label:"Hydration",   score:scores.waterScore,  desc:`${water || "--"} ml consumed` },
+    { icon:"❤️", label:"Heart Rate",  score:scores.bpmScore,    desc:`${bpm || "--"} bpm avg` },
+    { icon:"🔄", label:"Consistency", score:scores.consistScore,desc:`${streak} day streak` },
+  ];
+
+  document.getElementById("gradeCards").innerHTML = categories.map(c => {
+    const g = getGrade(c.score);
+    return `
+      <div class="grade-card" style="border-color:${g.color}22;">
+        <div class="gc-icon">${c.icon}</div>
+        <div class="gc-cat">${c.label}</div>
+        <div class="gc-grade ${g.class}">${g.grade}</div>
+        <div class="gc-score">${c.desc}</div>
+        <div class="gc-bar">
+          <div class="gc-fill" style="width:${c.score}%;background:${g.color};"></div>
+        </div>
+      </div>`;
+  }).join("");
+
+  // ── Stats table ──
+  const rows = [
+    { metric:"🔥 Calories Burned",  value: calories ? `${calories} kcal` : "No data",   goal:`${calGoal} kcal`,  pct:scores.calScore   },
+    { metric:"👣 Daily Steps",       value: steps    ? steps.toLocaleString()    : "No data", goal:"10,000",   pct:scores.stepScore  },
+    { metric:"💧 Water Intake",      value: water    ? `${water} ml`    : "No data",   goal:`${waterGoal} ml`, pct:scores.waterScore },
+    { metric:"❤️ Heart Rate",        value: bpm      ? `${bpm} bpm`     : "No data",   goal:"60–100 bpm",      pct:scores.bpmScore   },
+    { metric:"🔄 Active Streak",     value: `${streak} days`,                          goal:"7 days",          pct:scores.consistScore },
+    { metric:"🍎 Foods Logged",      value: `${foodLog.length} items`,                 goal:"3 per day",        pct:scores.nutritionScore },
+    { metric:"⚡ Workout Plans",     value: planData ? "1 active plan" : "No plan",    goal:"Have a plan",     pct: planData ? 100 : 0 },
+  ];
+
+  document.getElementById("statsTableBody").innerHTML = rows.map(r => {
+    const status = r.pct >= 80 ? ["Met Goal ✓","status-met"] :
+                   r.pct >= 50 ? ["Almost There","status-close"] :
+                   r.pct >  0  ? ["Below Goal","status-missed"] :
+                                 ["No Data","status-nodata"];
+    return `<tr>
+      <td style="font-weight:600;">${r.metric}</td>
+      <td>${r.value}</td>
+      <td style="color:var(--muted);">${r.goal}</td>
+      <td><span class="status-pill ${status[1]}">${status[0]}</span></td>
+    </tr>`;
+  }).join("");
+
+  // ── Radar chart ──
+  const radarCtx = document.getElementById("radarChart").getContext("2d");
+  new Chart(radarCtx, {
+    type: "radar",
+    data: {
+      labels: ["Calories","Steps","Hydration","Heart Rate","Consistency","Nutrition"],
+      datasets: [{
+        label:             "Your Scores",
+        data:              [scores.calScore, scores.stepScore, scores.waterScore,
+                            scores.bpmScore, scores.consistScore, scores.nutritionScore],
+        backgroundColor:   "rgba(124,58,237,0.2)",
+        borderColor:       "#7c3aed",
+        borderWidth:       2.5,
+        pointBackgroundColor: "#7c3aed",
+        pointRadius:       5,
+        pointHoverRadius:  8
+      }]
+    },
+    options: {
+      responsive:  false,
+      animation:   { duration: 800 },
+      scales: {
+        r: {
+          min:        0,
+          max:        100,
+          ticks:      { display:false },
+          grid:       { color:"rgba(255,255,255,0.08)" },
+          angleLines: { color:"rgba(255,255,255,0.08)" },
+          pointLabels:{ color:"#94a3b8", font:{ family:"DM Sans", size:11 } }
+        }
+      },
+      plugins: { legend:{ display:false } }
+    }
+  });
+
+  // ── 7-Day Activity bar chart ──
+  const DAYS      = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const calData   = Array.from({length:7}, (_,i) => calHistory[i]  ? (calHistory[i].val   || calHistory[i])  : 0);
+  const stepData  = Array.from({length:7}, (_,i) => stepHistory[i] ? (stepHistory[i].steps || stepHistory[i]) : 0);
+
+  const actCtx = document.getElementById("activityChart").getContext("2d");
+  new Chart(actCtx, {
+    type: "bar",
+    data: {
+      labels: DAYS,
+      datasets: [
+        {
+          label:           "Calories",
+          data:            calData,
+          backgroundColor: "rgba(124,58,237,0.75)",
+          borderRadius:    6,
+          yAxisID:         "y"
+        },
+        {
+          label:           "Steps (÷10)",
+          data:            stepData.map(s => Math.round(s/10)),
+          backgroundColor: "rgba(245,158,11,0.7)",
+          borderRadius:    6,
+          yAxisID:         "y"
+        }
+      ]
+    },
+    options: {
+      responsive:  true,
+      animation:   { duration:600 },
+      plugins: {
+        legend: { labels:{ color:"#94a3b8", font:{family:"DM Sans"} } },
+        tooltip:{ backgroundColor:"rgba(15,15,19,0.95)", titleColor:"#f1f5f9", bodyColor:"#94a3b8",
+                  padding:12, cornerRadius:10 }
+      },
+      scales: {
+        x:  { ticks:{ color:"#94a3b8" }, grid:{ color:"rgba(255,255,255,0.04)" } },
+        y:  { ticks:{ color:"#94a3b8" }, grid:{ color:"rgba(255,255,255,0.06)" }, beginAtZero:true }
+      }
+    }
+  });
+
+  // ── Achievements ──
+  const allAchievements = [
+    { icon:"🏃",  title:"Step Master",    desc:"Hit 10,000 steps",    unlocked: steps >= 10000 },
+    { icon:"💧",  title:"Hydration Hero", desc:"Met water goal",       unlocked: water >= waterGoal },
+    { icon:"🔥",  title:"Calorie Crusher",desc:"Hit calorie burn goal",unlocked: calories >= calGoal },
+    { icon:"🔄",  title:"Consistency King",desc:"3+ day streak",       unlocked: streak >= 3 },
+    { icon:"🏆",  title:"Week Warrior",   desc:"7-day streak",         unlocked: streak >= 7 },
+    { icon:"🍎",  title:"Food Tracker",   desc:"Logged 3+ foods",      unlocked: foodLog.length >= 3 },
+    { icon:"⚡",  title:"Planner Pro",    desc:"Generated a workout plan",unlocked: !!planData },
+    { icon:"❤️",  title:"Heart Healthy",  desc:"Optimal resting BPM",  unlocked: bpm >= 60 && bpm <= 100 },
+  ];
+
+  document.getElementById("achievementsGrid").innerHTML = allAchievements.map(a => `
+    <div class="achievement ${a.unlocked ? "" : "ach-locked"}">
+      <div class="ach-icon">${a.icon}</div>
+      <div>
+        <div class="ach-title">${a.title} ${a.unlocked ? "✓" : "🔒"}</div>
+        <div class="ach-desc">${a.desc}</div>
+      </div>
+    </div>
+  `).join("");
+
+  // ── Smart personalised recommendations ──
+  const recs = [];
+
+  if (scores.stepScore < 60)
+    recs.push({ priority:"high", text:"🚶 You're below your step goal. Try a 20-minute walk after dinner — it adds ~2,500 steps and helps digestion." });
+  if (scores.waterScore < 70)
+    recs.push({ priority:"high", text:"💧 You're under-hydrated. Set phone reminders every 2 hours to drink 250ml. Dehydration reduces performance by up to 20%." });
+  if (scores.calScore < 50)
+    recs.push({ priority:"medium", text:"🔥 Low calorie burn this week. Add 2 short HIIT sessions (15 min each) to significantly boost your weekly burn." });
+  if (!planData)
+    recs.push({ priority:"medium", text:"⚡ You don't have an active workout plan. Head to the Smart Planner to generate a personalized weekly schedule." });
+  if (streak < 3)
+    recs.push({ priority:"medium", text:"🔄 Your streak is low. Consistency beats intensity — even 15 minutes of activity daily builds the habit." });
+  if (foodLog.length < 2)
+    recs.push({ priority:"low", text:"🍎 Track your meals in the Food Scanner to get a full nutrition picture and understand how food affects your energy." });
+  if (bpm > 100 && bpm > 0)
+    recs.push({ priority:"high", text:"❤️ Your resting heart rate is elevated. Focus on stress reduction, better sleep, and light cardio to lower it." });
+  if (scores.overall >= 80)
+    recs.push({ priority:"low", text:"🏆 Outstanding week! To keep progressing, try increasing your step goal by 1,000 or adding one extra workout day." });
+
+  if (!recs.length)
+    recs.push({ priority:"low", text:"✅ Looking good! Sync your Google Fit data and log meals to get more detailed recommendations next week." });
+
+  document.getElementById("recsGrid").innerHTML = recs.map(r => `
+    <div class="rec-card">
+      <div class="rec-priority priority-${r.priority}">${r.priority.toUpperCase()} PRIORITY</div>
+      <div class="rec-text">${r.text}</div>
+    </div>
+  `).join("");
+}
+
+// ── Print / Export PDF ──
+function printReport() {
+  window.print();
+}
+
+// ── Run on load ──
+generateReport();
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.setItem("isLoggedIn","false");
+  window.location.href = "index.html";
+});
+</script>
+</body>
+</html>

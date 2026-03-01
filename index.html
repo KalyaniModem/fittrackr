@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrackr — Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+
+  <div class="auth-card">
+    <div class="logo">FIT<span style="color:var(--accent)">TRACKR</span></div>
+    <p class="tagline">Your personal fitness & nutrition dashboard</p>
+
+    <h2>WELCOME BACK</h2>
+
+    <div id="alertBox" class="alert"></div>
+
+    <form id="loginForm" novalidate>
+      <input type="text"     id="name"     class="input-box" placeholder="Your Name"     required autocomplete="name">
+      <input type="email"    id="email"    class="input-box" placeholder="Email Address" required autocomplete="email">
+      <input type="password" id="password" class="input-box" placeholder="Password"      required autocomplete="current-password">
+      <button type="submit" class="btn btn-primary" id="loginBtn">
+        <span id="btnText">Login</span>
+      </button>
+    </form>
+
+    <p class="auth-link">Don't have an account? <a href="signup.html">Sign Up</a></p>
+  </div>
+
+  <script>
+    // Redirect if already logged in
+    if (localStorage.getItem("isLoggedIn") === "true") {
+      window.location.href = "dashboard.html";
+    }
+
+    const alertBox   = document.getElementById("alertBox");
+    const loginForm  = document.getElementById("loginForm");
+    const btnText    = document.getElementById("btnText");
+
+    function showAlert(msg, type = "error") {
+      alertBox.textContent = msg;
+      alertBox.className = `alert alert-${type} show`;
+    }
+
+    loginForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const name     = document.getElementById("name").value.trim();
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!name || !email || !password) {
+        return showAlert("Please fill in all fields.");
+      }
+
+      btnText.textContent = "Logging in…";
+      document.getElementById("loginBtn").disabled = true;
+
+      try {
+        const res = await fetch("http://localhost:3000/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.message === "Login successful") {
+          localStorage.setItem("isLoggedIn", "true");
+          localStorage.setItem("username", data.name);
+          showAlert("Login successful! Redirecting…", "success");
+          setTimeout(() => window.location.href = "dashboard.html", 900);
+        } else {
+          showAlert(data.message || "Invalid credentials. Please try again.");
+          btnText.textContent = "Login";
+          document.getElementById("loginBtn").disabled = false;
+        }
+      } catch (err) {
+        showAlert("Network error. Is the server running?");
+        btnText.textContent = "Login";
+        document.getElementById("loginBtn").disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrackr — Sign Up</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+
+  <div class="auth-card">
+    <div class="logo">FIT<span style="color:var(--accent)">TRACKR</span></div>
+    <p class="tagline">Start your fitness journey today</p>
+
+    <h2>CREATE ACCOUNT</h2>
+
+    <div id="alertBox" class="alert"></div>
+
+    <form id="signupForm" novalidate>
+      <input type="text"     id="signupName"     class="input-box" placeholder="Full Name"        required autocomplete="name">
+      <input type="email"    id="signupEmail"    class="input-box" placeholder="Email Address"    required autocomplete="email">
+      <input type="password" id="signupPassword" class="input-box" placeholder="Password (min 6)" required autocomplete="new-password">
+      <button type="submit" class="btn btn-primary" id="signupBtn">
+        <span id="btnText">Create Account</span>
+      </button>
+    </form>
+
+    <p class="auth-link">Already have an account? <a href="index.html">Login</a></p>
+  </div>
+
+  <script>
+    const alertBox  = document.getElementById("alertBox");
+    const btnText   = document.getElementById("btnText");
+
+    function showAlert(msg, type = "error") {
+      alertBox.textContent = msg;
+      alertBox.className = `alert alert-${type} show`;
+    }
+
+    function validateEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    document.getElementById("signupForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const name     = document.getElementById("signupName").value.trim();
+      const email    = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value;
+
+      if (!name || !email || !password) return showAlert("All fields are required.");
+      if (!validateEmail(email))          return showAlert("Please enter a valid email.");
+      if (password.length < 6)            return showAlert("Password must be at least 6 characters.");
+
+      btnText.textContent = "Creating account…";
+      document.getElementById("signupBtn").disabled = true;
+
+      try {
+        const res = await fetch("http://localhost:3000/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.message === "Signup successful!") {
+          localStorage.setItem("isLoggedIn", "true");
+          localStorage.setItem("username", data.name);
+          showAlert("Account created! Redirecting to dashboard…", "success");
+          setTimeout(() => window.location.href = "dashboard.html", 1000);
+        } else {
+          showAlert(data.message || "Signup failed. Please try again.");
+          btnText.textContent = "Create Account";
+          document.getElementById("signupBtn").disabled = false;
+        }
+      } catch (err) {
+        showAlert("Network error. Is the server running?");
+        btnText.textContent = "Create Account";
+        document.getElementById("signupBtn").disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

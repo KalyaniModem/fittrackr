@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrackr — Heart Rate</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body><script>
+  var _s = JSON.parse(localStorage.getItem("appSettings") || "{}");
+  if (_s.darkMode === false) document.body.classList.add("light-mode");
+</script>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">FIT<span>TRACKR</span></div>
+    <nav>
+      <a class="nav-item" href="dashboard.html">       <span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="profile.html">         <span class="icon">👤</span> Profile</a>
+      <a class="nav-item" href="water_intake.html">    <span class="icon">💧</span> Water Intake</a>
+      <a class="nav-item" href="step.html">            <span class="icon">👣</span> Steps</a>
+      <a class="nav-item" href="calorie.html">         <span class="icon">🔥</span> Calories</a>
+      <a class="nav-item active" href="heart_rate.html"><span class="icon">❤️</span> Heart Rate</a>
+       <a class="nav-item" href="workout_planner.html"> <span class="icon">⚡</span> Smart Planner</a>
+       <a class="nav-item" href="food_scanner.html">   <span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item" href="report.html">           <span class="icon">📊</span> Report Card</a>
+      <a class="nav-item" href="settings.html">        <span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-logout" id="logoutBtn">⎋ Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>❤️ HEART RATE</h1>
+      <p>Monitor your BPM from Google Fit</p>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <!-- Stats -->
+    <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:24px;">
+      <div class="stat-card red">
+        <div class="stat-icon pulse">❤️</div>
+        <div class="stat-value" id="currentBPM">--</div>
+        <div class="stat-label">Current BPM</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value" id="avgBPM">--</div>
+        <div class="stat-label">Average BPM</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">💪</div>
+        <div class="stat-value" id="zoneDisplay">--</div>
+        <div class="stat-label">Heart rate zone</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card" style="margin-bottom:24px;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="fetchHRBtn">🔄 Sync Heart Rate</button>
+        <button class="btn btn-google" id="googleLoginBtn">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G"> Connect Google
+        </button>
+      </div>
+    </div>
+
+    <!-- Chart + History -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:18px;">
+      <div class="card">
+        <div class="section-title">BPM OVER TIME</div>
+        <div class="chart-wrap">
+          <canvas id="heartRateChart" height="140"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">READINGS</div>
+        <ul class="history-list" id="heartRateList">
+          <li class="history-item" style="color:var(--muted);justify-content:center;">No data yet</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  if (localStorage.getItem("isLoggedIn") !== "true") window.location.href = "index.html";
+
+  const alertBox = document.getElementById("alertBox");
+  function showAlert(msg, type="info") {
+    alertBox.textContent = msg;
+    alertBox.className = `alert alert-${type} show`;
+    setTimeout(() => alertBox.classList.remove("show"), 4000);
+  }
+
+  let accessToken = localStorage.getItem("googleAccessToken");
+  let chartInst   = null;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has("access_token")) {
+    accessToken = urlParams.get("access_token");
+    localStorage.setItem("googleAccessToken", accessToken);
+    showAlert("Google Fit connected!", "success");
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  document.getElementById("googleLoginBtn").addEventListener("click", () => {
+    window.location.href = `http://localhost:3000/auth/google?state=${encodeURIComponent("heart_rate.html")}`;
+  });
+  document.getElementById("fetchHRBtn").addEventListener("click", fetchHeartRate);
+
+  function getZone(bpm) {
+    if (bpm < 60)  return "Resting";
+    if (bpm < 100) return "Normal";
+    if (bpm < 140) return "Cardio";
+    return "Peak";
+  }
+
+  async function fetchHeartRate() {
+    if (!accessToken) return showAlert("Connect Google Fit first.", "error");
+    showAlert("Syncing heart rate…", "info");
+    try {
+      const res  = await fetch(`http://localhost:3000/api/heart_rate?access_token=${accessToken}`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const hrs  = data.heartRates;
+
+      if (!hrs || !hrs.length) return showAlert("No heart rate data found.", "info");
+
+      const latest = hrs[hrs.length - 1];
+      const avg    = Math.round(hrs.reduce((s,r) => s + r.bpm, 0) / hrs.length);
+
+      document.getElementById("currentBPM").textContent = latest.bpm + " bpm";
+      document.getElementById("avgBPM").textContent     = avg + " bpm";
+      document.getElementById("zoneDisplay").textContent = getZone(latest.bpm);
+      localStorage.setItem("lastBPM", latest.bpm);
+
+      renderChart(hrs);
+      renderHistory(hrs);
+      showAlert("Heart rate synced!", "success");
+    } catch {
+      showAlert("Sync failed. Check server & token.", "error");
+    }
+  }
+
+  function renderChart(data) {
+    const ctx = document.getElementById("heartRateChart").getContext("2d");
+    if (chartInst) chartInst.destroy();
+    chartInst = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: data.map(r => r.time),
+        datasets: [{
+          label: "BPM",
+          data: data.map(r => r.bpm),
+          backgroundColor: "rgba(239,68,68,0.15)",
+          borderColor: "#ef4444",
+          borderWidth: 2,
+          pointBackgroundColor: "#ef4444",
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: "#94a3b8" } } },
+        scales: {
+          x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.04)" } },
+          y: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.06)" } }
+        }
+      }
+    });
+  }
+
+  function renderHistory(data) {
+    const list = document.getElementById("heartRateList");
+    list.innerHTML = data.slice().reverse().map(r =>
+      `<li class="history-item"><span>${r.time}</span><span>${r.bpm} bpm</span></li>`
+    ).join("");
+  }
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.setItem("isLoggedIn","false");
+    window.location.href = "index.html";
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrackr — Profile</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body><script>
+  var _s = JSON.parse(localStorage.getItem("appSettings") || "{}");
+  if (_s.darkMode === false) document.body.classList.add("light-mode");
+</script>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">FIT<span>TRACKR</span></div>
+    <nav>
+      <a class="nav-item" href="dashboard.html">    <span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-item active" href="profile.html"><span class="icon">👤</span> Profile</a>
+      <a class="nav-item" href="water_intake.html"> <span class="icon">💧</span> Water Intake</a>
+      <a class="nav-item" href="step.html">         <span class="icon">👣</span> Steps</a>
+      <a class="nav-item" href="calorie.html">      <span class="icon">🔥</span> Calories</a>
+      <a class="nav-item" href="heart_rate.html">   <span class="icon">❤️</span> Heart Rate</a>
+
+      <a class="nav-item" href="workout_planner.html"> <span class="icon">⚡</span> Smart Planner</a>
+      <a class="nav-item" href="food_scanner.html">   <span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item" href="report.html">           <span class="icon">📊</span> Report Card</a>
+
+      <a class="nav-item" href="settings.html">     <span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-logout" id="logoutBtn">⎋ Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>👤 MY PROFILE</h1>
+      <p>Manage your personal information and view your BMI</p>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+      <!-- Profile form -->
+      <div class="card">
+        <div class="section-title">PERSONAL INFO</div>
+        <form id="profileForm">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="name" class="form-input" placeholder="Your name" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Age</label>
+            <input type="number" id="age" class="form-input" placeholder="Years" min="10" max="120" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gender</label>
+            <select id="gender" class="form-select" required>
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" id="phone" class="form-input" placeholder="+91 XXXXX XXXXX">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Height (cm)</label>
+            <input type="number" id="height" class="form-input" placeholder="e.g. 170" min="100" max="250">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Weight (kg)</label>
+            <input type="number" id="weight" class="form-input" placeholder="e.g. 65" min="20" max="300">
+          </div>
+          <button type="submit" class="btn btn-primary">Save Profile</button>
+        </form>
+      </div>
+
+      <!-- BMI card -->
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div class="card">
+          <div class="section-title">BMI CALCULATOR</div>
+          <div style="text-align:center;padding:16px 0;">
+            <div style="font-family:var(--font-head);font-size:3.5rem;letter-spacing:2px;color:var(--text);" id="bmiValue">--</div>
+            <div id="bmiCategory" style="margin:10px 0;">
+              <span class="bmi-badge" id="bmiBadge">Enter height & weight</span>
+            </div>
+            <p style="color:var(--muted);font-size:.85rem;margin-top:8px;" id="bmiMsg"></p>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.82rem;color:var(--muted);">
+              <span>Underweight</span><span style="text-align:right;">&lt; 18.5</span>
+              <span>Normal</span>     <span style="text-align:right;">18.5 – 24.9</span>
+              <span>Overweight</span> <span style="text-align:right;">25 – 29.9</span>
+              <span>Obese</span>      <span style="text-align:right;">≥ 30</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">FITNESS GOAL</div>
+          <div class="form-group">
+            <label class="form-label">My Goal</label>
+            <select id="fitnessGoal" class="form-select">
+              <option value="">Select a goal</option>
+              <option value="Lose weight">Lose weight</option>
+              <option value="Build muscle">Build muscle</option>
+              <option value="Improve endurance">Improve endurance</option>
+              <option value="Stay healthy">Stay healthy</option>
+              <option value="Increase flexibility">Increase flexibility</option>
+            </select>
+          </div>
+          <div id="goalAdvice" style="background:var(--surface2);border-radius:10px;padding:12px;color:var(--muted);font-size:.88rem;"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  if (localStorage.getItem("isLoggedIn") !== "true") window.location.href = "index.html";
+
+  const username = localStorage.getItem("username");
+  const alertBox = document.getElementById("alertBox");
+  function showAlert(msg, type="info") {
+    alertBox.textContent = msg;
+    alertBox.className = `alert alert-${type} show`;
+    setTimeout(() => alertBox.classList.remove("show"), 4000);
+  }
+
+  // Load profile
+  window.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const res  = await fetch(`http://localhost:3000/get-profile?username=${username}`);
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById("name").value   = data.profile.name   || "";
+        document.getElementById("age").value    = data.profile.age    || "";
+        document.getElementById("gender").value = data.profile.gender || "";
+        document.getElementById("phone").value  = data.profile.phone  || "";
+      }
+    } catch { /* server might not be running */ }
+
+    // Restore from localStorage too
+    const h = localStorage.getItem("profileHeight");
+    const w = localStorage.getItem("profileWeight");
+    const g = localStorage.getItem("fitnessGoal");
+    if (h) document.getElementById("height").value = h;
+    if (w) document.getElementById("weight").value = w;
+    if (g) document.getElementById("fitnessGoal").value = g;
+    calcBMI();
+  });
+
+  // BMI auto-calc
+  ["height","weight"].forEach(id => {
+    document.getElementById(id).addEventListener("input", calcBMI);
+  });
+
+  function calcBMI() {
+    const h = parseFloat(document.getElementById("height").value) / 100;
+    const w = parseFloat(document.getElementById("weight").value);
+    if (!h || !w || h < 0.5) return;
+    const bmi = (w / (h * h)).toFixed(1);
+    document.getElementById("bmiValue").textContent = bmi;
+    const badge = document.getElementById("bmiBadge");
+    const msg   = document.getElementById("bmiMsg");
+    if      (bmi < 18.5) { badge.className="bmi-badge bmi-under"; badge.textContent="Underweight"; msg.textContent="Consider increasing caloric intake."; }
+    else if (bmi < 25)   { badge.className="bmi-badge bmi-normal"; badge.textContent="Normal weight ✓"; msg.textContent="Great! Keep maintaining your current lifestyle."; }
+    else if (bmi < 30)   { badge.className="bmi-badge bmi-over";  badge.textContent="Overweight"; msg.textContent="Light cardio and diet adjustments recommended."; }
+    else                  { badge.className="bmi-badge bmi-obese"; badge.textContent="Obese"; msg.textContent="Consult a healthcare professional for guidance."; }
+  }
+
+  // Goal advice
+  const advice = {
+    "Lose weight":         "🔥 Focus on a caloric deficit + cardio. Aim for 7,000–10,000 steps/day.",
+    "Build muscle":        "💪 Prioritize strength training 3–5x/week. Consume 1.6g protein per kg bodyweight.",
+    "Improve endurance":   "🏃 Progressive cardio — add 10% distance per week. Track heart rate zones.",
+    "Stay healthy":        "🌿 Balance diet, 150 min moderate exercise/week, and 7–8 hours sleep.",
+    "Increase flexibility":"🧘 Daily stretching + yoga. Hold stretches 30–60 seconds for best results."
+  };
+  document.getElementById("fitnessGoal").addEventListener("change", function() {
+    const val = this.value;
+    document.getElementById("goalAdvice").textContent = advice[val] || "";
+    localStorage.setItem("fitnessGoal", val);
+  });
+
+  // Save profile
+  document.getElementById("profileForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const h = document.getElementById("height").value;
+    const w = document.getElementById("weight").value;
+    if (h) localStorage.setItem("profileHeight", h);
+    if (w) localStorage.setItem("profileWeight", w);
+
+    const profileData = {
+      username,
+      name:   document.getElementById("name").value,
+      age:    document.getElementById("age").value,
+      gender: document.getElementById("gender").value,
+      phone:  document.getElementById("phone").value
+    };
+    try {
+      const res  = await fetch("http://localhost:3000/save-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileData)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showAlert("Profile saved successfully! ✓", "success");
+        setTimeout(() => window.location.href = "dashboard.html", 1200);
+      } else {
+        showAlert(data.message || "Save failed.", "error");
+      }
+    } catch {
+      showAlert("Server not reachable. Profile saved locally.", "info");
+    }
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.setItem("isLoggedIn","false");
+    window.location.href = "index.html";
+  });
+</script>
+</body>
+</html>

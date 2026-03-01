@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrackr — Settings</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">FIT<span>TRACKR</span></div>
+    <nav>
+      <a class="nav-item" href="dashboard.html">    <span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="profile.html">      <span class="icon">👤</span> Profile</a>
+      <a class="nav-item" href="water_intake.html"> <span class="icon">💧</span> Water Intake</a>
+      <a class="nav-item" href="step.html">         <span class="icon">👣</span> Steps</a>
+      <a class="nav-item" href="calorie.html">      <span class="icon">🔥</span> Calories</a>
+      <a class="nav-item" href="heart_rate.html">   <span class="icon">❤️</span> Heart Rate</a>
+    
+      <a class="nav-item" href="workout_planner.html"> <span class="icon">⚡</span> Smart Planner</a>
+      <a class="nav-item" href="food_scanner.html">   <span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item" href="report.html">           <span class="icon">📊</span> Report Card</a>
+
+      <a class="nav-item active" href="settings.html"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-logout" id="logoutBtn">⎋ Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>⚙️ SETTINGS</h1>
+      <p>Customize your FitTrackr experience</p>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+
+      <div class="card">
+        <div class="section-title">PREFERENCES</div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">🌙 Dark Mode</div>
+            <div style="font-size:.8rem;color:var(--muted);margin-top:2px;">Toggle dark/light theme</div>
+          </div>
+          <div class="toggle on" id="darkModeToggle"></div>
+        </div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">🔔 Reminders</div>
+            <div style="font-size:.8rem;color:var(--muted);margin-top:2px;">Enable hydration & activity reminders</div>
+          </div>
+          <div class="toggle" id="reminderToggle"></div>
+        </div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">📊 Show Weekly Stats</div>
+            <div style="font-size:.8rem;color:var(--muted);margin-top:2px;">Display chart on dashboard</div>
+          </div>
+          <div class="toggle on" id="weeklyStatsToggle"></div>
+        </div>
+
+        <div style="margin-top:20px;" class="form-group">
+          <label class="form-label">Language</label>
+          <select id="languageSelect" class="form-select">
+            <option value="en">🇺🇸 English</option>
+            <option value="hi">🇮🇳 Hindi</option>
+            <option value="es">🇪🇸 Spanish</option>
+            <option value="fr">🇫🇷 French</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Units</label>
+          <select id="unitsSelect" class="form-select">
+            <option value="metric">Metric (kg, km)</option>
+            <option value="imperial">Imperial (lbs, miles)</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" id="saveSettingsBtn" style="margin-top:8px;">Save Preferences</button>
+      </div>
+
+      <!-- Account section -->
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div class="card">
+          <div class="section-title">ACCOUNT</div>
+          <div style="display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--border);">
+            <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-size:1.4rem;">
+              👤
+            </div>
+            <div>
+              <div style="font-weight:600;font-size:1.05rem;" id="accountName">--</div>
+              <div style="color:var(--muted);font-size:.85rem;">Logged in</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;">
+            <button class="btn btn-secondary" onclick="window.location.href='profile.html'">✏️ Edit Profile</button>
+            <button class="btn btn-danger" id="clearDataBtn">🗑️ Clear All App Data</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">ABOUT FITTRACKR</div>
+          <div style="color:var(--muted);font-size:.88rem;line-height:1.8;">
+            <p><strong style="color:var(--text);">Version:</strong> 2.0.0</p>
+            <p><strong style="color:var(--text);">Stack:</strong> HTML · CSS · JavaScript · Node.js</p>
+            <p><strong style="color:var(--text);">Backend:</strong> Express.js + MySQL</p>
+            <p><strong style="color:var(--text);">APIs:</strong> Google Fit (OAuth 2.0)</p>
+            <p style="margin-top:12px;font-style:italic;">Built as a personal fitness dashboard project demonstrating full-stack web development, third-party API integration, and real-time data visualization.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  if (localStorage.getItem("isLoggedIn") !== "true") window.location.href = "index.html";
+
+  document.getElementById("accountName").textContent = localStorage.getItem("username") || "User";
+
+  const alertBox = document.getElementById("alertBox");
+  function showAlert(msg, type="success") {
+    alertBox.textContent = msg;
+    alertBox.className = `alert alert-${type} show`;
+    setTimeout(() => alertBox.classList.remove("show"), 3000);
+  }
+
+  // ── Apply saved theme on page load ──
+  const saved = JSON.parse(localStorage.getItem("appSettings") || "{}");
+  const isDark = saved.darkMode !== false; // default is dark
+  if (!isDark) document.body.classList.add("light-mode");
+
+  // ── Load saved settings into toggles ──
+  if (!isDark)              document.getElementById("darkModeToggle").classList.remove("on");
+  if (saved.reminders)      document.getElementById("reminderToggle").classList.add("on");
+  if (saved.weeklyStats === false) document.getElementById("weeklyStatsToggle").classList.remove("on");
+  if (saved.language)       document.getElementById("languageSelect").value = saved.language;
+  if (saved.units)          document.getElementById("unitsSelect").value    = saved.units;
+
+  // ── Dark mode toggle — instantly applies to page ──
+  document.getElementById("darkModeToggle").addEventListener("click", function() {
+    this.classList.toggle("on");
+    const darkOn = this.classList.contains("on");
+    if (darkOn) {
+      document.body.classList.remove("light-mode");
+    } else {
+      document.body.classList.add("light-mode");
+    }
+  });
+
+  // ── Other toggles ──
+  ["reminderToggle","weeklyStatsToggle"].forEach(id => {
+    document.getElementById(id).addEventListener("click", function() {
+      this.classList.toggle("on");
+    });
+  });
+
+  // ── Save settings ──
+  document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+    const darkOn = document.getElementById("darkModeToggle").classList.contains("on");
+    const settings = {
+      darkMode:    darkOn,
+      reminders:   document.getElementById("reminderToggle").classList.contains("on"),
+      weeklyStats: document.getElementById("weeklyStatsToggle").classList.contains("on"),
+      language:    document.getElementById("languageSelect").value,
+      units:       document.getElementById("unitsSelect").value
+    };
+    localStorage.setItem("appSettings", JSON.stringify(settings));
+
+    // Apply theme immediately
+    if (darkOn) {
+      document.body.classList.remove("light-mode");
+    } else {
+      document.body.classList.add("light-mode");
+    }
+
+    try {
+      await fetch("http://localhost:3000/save-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings)
+      });
+    } catch { /* silent, saved locally */ }
+    showAlert("Settings saved! ✓", "success");
+  });
+
+  document.getElementById("clearDataBtn").addEventListener("click", () => {
+    if (!confirm("This will clear ALL local fitness data. Continue?")) return;
+    const keep = { isLoggedIn: localStorage.getItem("isLoggedIn"), username: localStorage.getItem("username") };
+    localStorage.clear();
+    Object.entries(keep).forEach(([k,v]) => v && localStorage.setItem(k, v));
+    showAlert("All app data cleared.", "info");
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.setItem("isLoggedIn","false");
+    window.location.href = "index.html";
+  });
+</script>
+</body>
+</html>

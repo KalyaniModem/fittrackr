@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrackr — Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     SPLASH SCREEN
+     Shows for 2.2 seconds on first load
+     ══════════════════════════════════════ -->
+<div id="splashScreen">
+  <div class="splash-inner">
+    <div class="splash-logo">
+      <span class="splash-fit">FIT</span><span class="splash-trackr">TRACKR</span>
+    </div>
+    <div class="splash-tagline">Your personal fitness command center</div>
+    <div class="splash-bar-wrap">
+      <div class="splash-bar"></div>
+    </div>
+  </div>
+  <div class="splash-orb splash-orb1"></div>
+  <div class="splash-orb splash-orb2"></div>
+  <div class="splash-orb splash-orb3"></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN APP
+     ══════════════════════════════════════ -->
+<div class="app-shell" id="appShell" style="opacity:0;">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">FIT<span>TRACKR</span></div>
+
+    <nav>
+      <a class="nav-item active" href="dashboard.html">   <span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="profile.html">            <span class="icon">👤</span> Profile</a>
+      <a class="nav-item" href="water_intake.html">       <span class="icon">💧</span> Water Intake</a>
+      <a class="nav-item" href="step.html">               <span class="icon">👣</span> Steps</a>
+      <a class="nav-item" href="calorie.html">            <span class="icon">🔥</span> Calories</a>
+      <a class="nav-item" href="heart_rate.html">         <span class="icon">❤️</span> Heart Rate</a>
+      <a class="nav-item" href="workout_planner.html">    <span class="icon">⚡</span> Smart Planner</a>
+      <a class="nav-item" href="food_scanner.html">   <span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item" href="report.html">           <span class="icon">📊</span> Report Card</a>
+      <a class="nav-item" href="settings.html">           <span class="icon">⚙️</span> Settings</a>
+    </nav>
+
+    <!-- Sidebar streak widget -->
+    <div class="sidebar-streak">
+      <div class="streak-fire">🔥</div>
+      <div>
+        <div class="streak-num" id="sidebarStreak">0</div>
+        <div class="streak-label">day streak</div>
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <button class="btn-logout" id="logoutBtn">⎋ Logout</button>
+    </div>
+  </aside>
+
+  <!-- ── Main content ── -->
+  <main class="main-content" id="mainContent">
+
+    <!-- ── Top bar ── -->
+    <div class="top-bar">
+      <div>
+        <h1 class="welcome-title" id="welcomeMsg">GOOD MORNING</h1>
+        <p class="welcome-sub" id="welcomeSub">Loading your stats…</p>
+      </div>
+      <div class="top-bar-right">
+        <div class="date-chip" id="dateChip"></div>
+        <div class="avatar-wrap">
+        <div class="avatar-circle" id="avatarCircle" title="Profile">?</div>
+        <div class="profile-popup" id="profilePopup">
+          <div class="pp-header">
+            <div class="pp-avatar" id="ppAvatar">?</div>
+            <div>
+              <div class="pp-name" id="ppName">--</div>
+              <div class="pp-email">FitTrackr Member</div>
+            </div>
+          </div>
+          <div class="pp-body">
+            <div class="pp-stat-row">
+              <div class="pp-stat">
+                <div class="pp-stat-val" id="ppStreak">0</div>
+                <div class="pp-stat-label">🔥 Streak</div>
+              </div>
+              <div class="pp-stat">
+                <div class="pp-stat-val" id="ppSteps">--</div>
+                <div class="pp-stat-label">👣 Steps</div>
+              </div>
+              <div class="pp-stat">
+                <div class="pp-stat-val" id="ppCals">--</div>
+                <div class="pp-stat-label">🔥 kcal</div>
+              </div>
+            </div>
+          </div>
+          <div class="pp-actions">
+            <a href="profile.html" class="pp-btn pp-btn-profile">👤 View Profile</a>
+            <a href="settings.html" class="pp-btn pp-btn-settings">⚙️ Settings</a>
+            <button class="pp-btn pp-btn-logout" id="popupLogoutBtn">⎋ Logout</button>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- ── Motivational quote banner ── -->
+    <div class="quote-banner" id="quoteBanner">
+      <span class="quote-icon">💬</span>
+      <span id="quoteText"></span>
+    </div>
+
+    <!-- ── Stat cards ── -->
+    <div class="stat-grid" id="statGrid">
+      <div class="stat-card-v2 reveal" style="--delay:0.05s" data-color="#7c3aed">
+        <div class="sc-top">
+          <div class="sc-icon-wrap purple-bg">🔥</div>
+          <div class="sc-trend" id="calTrend"></div>
+        </div>
+        <div class="sc-value" id="dashCalories">--</div>
+        <div class="sc-label">Calories Burned</div>
+        <div class="sc-bar-wrap"><div class="sc-bar" id="calSCBar" style="background:#7c3aed"></div></div>
+      </div>
+
+      <div class="stat-card-v2 reveal" style="--delay:0.10s" data-color="#f59e0b">
+        <div class="sc-top">
+          <div class="sc-icon-wrap amber-bg">👣</div>
+          <div class="sc-trend" id="stepTrend"></div>
+        </div>
+        <div class="sc-value" id="dashSteps">--</div>
+        <div class="sc-label">Steps Today</div>
+        <div class="sc-bar-wrap"><div class="sc-bar" id="stepSCBar" style="background:#f59e0b"></div></div>
+      </div>
+
+      <div class="stat-card-v2 reveal" style="--delay:0.15s" data-color="#3b82f6">
+        <div class="sc-top">
+          <div class="sc-icon-wrap blue-bg">💧</div>
+        </div>
+        <div class="sc-value" id="dashWater">--</div>
+        <div class="sc-label">Water (ml)</div>
+        <div class="sc-bar-wrap"><div class="sc-bar" id="waterSCBar" style="background:#3b82f6"></div></div>
+      </div>
+
+      <div class="stat-card-v2 reveal" style="--delay:0.20s" data-color="#ef4444">
+        <div class="sc-top">
+          <div class="sc-icon-wrap red-bg">❤️</div>
+          <div class="bpm-pulse" id="bpmPulse"></div>
+        </div>
+        <div class="sc-value" id="dashBPM">--</div>
+        <div class="sc-label">Heart Rate (BPM)</div>
+        <div class="sc-bar-wrap"><div class="sc-bar" id="bpmSCBar" style="background:#ef4444"></div></div>
+      </div>
+
+      <div class="stat-card-v2 reveal" style="--delay:0.25s" data-color="#10b981">
+        <div class="sc-top">
+          <div class="sc-icon-wrap green-bg">⚡</div>
+        </div>
+        <div class="sc-value" id="dashWorkouts">--</div>
+        <div class="sc-label">Plans Generated</div>
+        <div class="sc-bar-wrap"><div class="sc-bar" id="workoutSCBar" style="background:#10b981"></div></div>
+      </div>
+    </div>
+
+    <!-- ── Middle row: Goals + Streak ── -->
+    <div class="mid-row reveal" style="--delay:0.3s">
+
+      <!-- Daily goals -->
+      <div class="card goals-card">
+        <div class="card-header">
+          <span class="section-title">DAILY GOALS</span>
+          <span class="card-badge">Today</span>
+        </div>
+
+        <div class="goal-item">
+          <div class="goal-meta">
+            <span>🔥 Calories</span>
+            <span id="calGoalLabel" class="goal-pct">0%</span>
+          </div>
+          <div class="goal-track">
+            <div class="goal-fill" id="calGoalFill" style="--color:#7c3aed; width:0%"></div>
+          </div>
+        </div>
+
+        <div class="goal-item">
+          <div class="goal-meta">
+            <span>👣 Steps</span>
+            <span id="stepGoalLabel" class="goal-pct">0%</span>
+          </div>
+          <div class="goal-track">
+            <div class="goal-fill" id="stepGoalFill" style="--color:#f59e0b; width:0%"></div>
+          </div>
+        </div>
+
+        <div class="goal-item">
+          <div class="goal-meta">
+            <span>💧 Water</span>
+            <span id="waterGoalLabel" class="goal-pct">0%</span>
+          </div>
+          <div class="goal-track">
+            <div class="goal-fill" id="waterGoalFill" style="--color:#3b82f6; width:0%"></div>
+          </div>
+        </div>
+
+        <div class="goal-item">
+          <div class="goal-meta">
+            <span>❤️ Heart Rate</span>
+            <span id="bpmGoalLabel" class="goal-pct">--</span>
+          </div>
+          <div class="goal-track">
+            <div class="goal-fill" id="bpmGoalFill" style="--color:#ef4444; width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Streak tracker -->
+      <div class="card streak-card">
+        <div class="card-header">
+          <span class="section-title">STREAK</span>
+          <span class="card-badge">Active</span>
+        </div>
+        <div class="streak-display">
+          <div class="streak-fire-big">🔥</div>
+          <div class="streak-big-num" id="streakNum">0</div>
+          <div class="streak-big-label">days in a row</div>
+        </div>
+        <div class="streak-week" id="streakWeek"></div>
+        <p class="streak-msg" id="streakMsg">Log your activity today to start your streak!</p>
+      </div>
+
+      <!-- Smart planner preview -->
+      <div class="card planner-card">
+        <div class="card-header">
+          <span class="section-title">⚡ SMART PLAN</span>
+          <span class="ai-badge">PERSONALIZED</span>
+        </div>
+        <div id="noPlanMsg" style="text-align:center; padding:20px 0;">
+          <div style="font-size:2.8rem; margin-bottom:10px;">⚡</div>
+          <p style="color:var(--muted); font-size:.88rem; margin-bottom:16px;">No workout plan yet.<br>Generate your personalized plan!</p>
+          <a href="workout_planner.html" class="btn-pill">Generate Plan →</a>
+        </div>
+        <div id="hasPlanMsg" style="display:none;">
+          <div id="planPreviewTags" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;"></div>
+          <p style="color:var(--muted); font-size:.82rem; margin-bottom:16px;" id="planPreviewDate"></p>
+          <div style="display:flex; gap:8px;">
+            <a href="workout_planner.html" class="btn-pill" style="flex:1; text-align:center;">View Plan</a>
+            <a href="workout_planner.html" class="btn-pill btn-pill-outline" style="flex:1; text-align:center;">New Plan</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Charts row ── -->
+    <div class="charts-row reveal" style="--delay:0.4s">
+
+      <!-- Weekly activity chart -->
+      <div class="card chart-card">
+        <div class="card-header">
+          <span class="section-title">WEEKLY ACTIVITY</span>
+          <div class="chart-tabs">
+            <button class="chart-tab active" onclick="switchChart('calories', this)">Calories</button>
+            <button class="chart-tab" onclick="switchChart('steps', this)">Steps</button>
+            <button class="chart-tab" onclick="switchChart('water', this)">Water</button>
+          </div>
+        </div>
+        <canvas id="weeklyChart" height="110"></canvas>
+      </div>
+
+      <!-- BPM donut chart -->
+      <div class="card donut-card">
+        <div class="card-header">
+          <span class="section-title">HEART ZONE</span>
+        </div>
+        <div class="donut-wrap">
+          <canvas id="bpmDonut" width="160" height="160"></canvas>
+          <div class="donut-center">
+            <div class="donut-bpm" id="donutBPM">--</div>
+            <div class="donut-unit">bpm</div>
+          </div>
+        </div>
+        <div class="zone-legend" id="zoneLegend">
+          <div class="zone-item"><span class="zone-dot" style="background:#10b981"></span>Resting &lt;60</div>
+          <div class="zone-item"><span class="zone-dot" style="background:#3b82f6"></span>Normal 60–99</div>
+          <div class="zone-item"><span class="zone-dot" style="background:#f59e0b"></span>Cardio 100–139</div>
+          <div class="zone-item"><span class="zone-dot" style="background:#ef4444"></span>Peak 140+</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE TRANSITION OVERLAY
+     ══════════════════════════════════════ -->
+<div id="pageTransition"></div>
+
+<!-- ══════════════════════════════════════
+     STYLES
+     ══════════════════════════════════════ -->
+<style>
+/* ── Splash Screen ── */
+#splashScreen {
+  position:   fixed; inset: 0;
+  background: #0a0a10;
+  display:    flex;
+  align-items: center;
+  justify-content: center;
+  z-index:    9999;
+  overflow:   hidden;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+#splashScreen.hide {
+  opacity:   0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+.splash-inner { text-align: center; position: relative; z-index: 2; }
+.splash-logo {
+  font-family:    'Bebas Neue', sans-serif;
+  font-size:      clamp(3rem, 10vw, 6rem);
+  letter-spacing: 6px;
+  animation:      splashPop 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.splash-fit     { color: #f1f5f9; }
+.splash-trackr  { color: #7c3aed; }
+.splash-tagline {
+  color:          #94a3b8;
+  font-size:      1rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top:     8px;
+  animation:      fadeUp 0.6s 0.3s both;
+}
+.splash-bar-wrap {
+  width:         200px;
+  height:        3px;
+  background:    rgba(255,255,255,0.08);
+  border-radius: 10px;
+  margin:        28px auto 0;
+  overflow:      hidden;
+  animation:     fadeUp 0.4s 0.5s both;
+}
+.splash-bar {
+  height:     100%;
+  width:      0%;
+  background: linear-gradient(90deg, #7c3aed, #f59e0b);
+  border-radius: 10px;
+  animation:  splashLoad 1.8s 0.5s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+.splash-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: orbFloat 8s ease-in-out infinite alternate;
+}
+.splash-orb1 { width:400px; height:400px; background:rgba(124,58,237,0.25); top:-100px; left:-100px; }
+.splash-orb2 { width:300px; height:300px; background:rgba(245,158,11,0.15); bottom:-50px; right:-50px; animation-delay:2s; }
+.splash-orb3 { width:200px; height:200px; background:rgba(16,185,129,0.12); top:50%; left:60%; animation-delay:4s; }
+
+@keyframes splashPop  { from { opacity:0; transform:scale(0.7) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
+@keyframes splashLoad { from { width:0%; } to { width:100%; } }
+@keyframes orbFloat   { from { transform:translate(0,0) scale(1); } to { transform:translate(30px,-20px) scale(1.1); } }
+
+/* ── Page Transition Overlay ── */
+#pageTransition {
+  position:   fixed; inset: 0;
+  background: linear-gradient(135deg, #7c3aed, #0a0a10);
+  z-index:    8888;
+  pointer-events: none;
+  opacity:    0;
+  transform:  translateX(-100%);
+  transition: transform 0.4s cubic-bezier(0.76,0,0.24,1), opacity 0.1s;
+}
+#pageTransition.sliding {
+  opacity:    1;
+  transform:  translateX(0);
+}
+
+/* ── App shell fade in ── */
+#appShell {
+  transition: opacity 0.5s ease;
+}
+#appShell.visible { opacity: 1 !important; }
+
+/* ── Reveal animation ── */
+.reveal {
+  opacity:    0;
+  transform:  translateY(24px);
+  transition: opacity 0.5s var(--delay, 0s) ease,
+              transform 0.5s var(--delay, 0s) cubic-bezier(0.34,1.2,0.64,1);
+}
+.reveal.show {
+  opacity:   1;
+  transform: translateY(0);
+}
+
+/* ── Top bar ── */
+.top-bar {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  margin-bottom:   20px;
+  padding-bottom:  20px;
+  border-bottom:   1px solid var(--border);
+}
+.welcome-title {
+  font-family:    'Bebas Neue', sans-serif;
+  font-size:      2.2rem;
+  letter-spacing: 2px;
+  background:     linear-gradient(135deg, #f1f5f9, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height:    1;
+}
+.welcome-sub    { color: var(--muted); font-size:.9rem; margin-top:4px; }
+.top-bar-right  { display:flex; align-items:center; gap:12px; }
+.date-chip {
+  padding:       6px 14px;
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+  border-radius: 20px;
+  font-size:     .82rem;
+  color:         var(--muted);
+}
+.avatar-circle {
+  width:           40px;
+  height:          40px;
+  border-radius:   50%;
+  background:      linear-gradient(135deg, #7c3aed, #f59e0b);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-weight:     700;
+  font-size:       1rem;
+  color:           #fff;
+  cursor:          pointer;
+  transition:      transform .2s;
+}
+.avatar-circle:hover { transform: scale(1.1); }
+
+/* ── Quote banner ── */
+.quote-banner {
+  background:    linear-gradient(135deg, rgba(124,58,237,0.1), rgba(245,158,11,0.08));
+  border:        1px solid rgba(124,58,237,0.2);
+  border-radius: 12px;
+  padding:       14px 20px;
+  margin-bottom: 20px;
+  display:       flex;
+  align-items:   center;
+  gap:           12px;
+  font-size:     .9rem;
+  color:         var(--muted);
+  font-style:    italic;
+  animation:     fadeUp 0.5s 0.2s both;
+}
+.quote-icon { font-size: 1.2rem; flex-shrink: 0; }
+
+/* ── Stat cards v2 ── */
+.stat-grid {
+  display:               grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap:                   14px;
+  margin-bottom:         20px;
+}
+.stat-card-v2 {
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: 16px;
+  padding:       20px 18px;
+  position:      relative;
+  overflow:      hidden;
+  cursor:        default;
+  transition:    transform .2s, box-shadow .2s, border-color .2s;
+}
+.stat-card-v2:hover {
+  transform:    translateY(-4px);
+  box-shadow:   0 16px 48px rgba(0,0,0,0.5);
+  border-color: rgba(124,58,237,0.5);
+}
+.stat-card-v2::after {
+  content:   '';
+  position:  absolute;
+  bottom:    0; left:0; right:0;
+  height:    2px;
+  background: var(--card-accent, #7c3aed);
+  opacity:   0;
+  transition: opacity .2s;
+}
+.stat-card-v2:hover::after { opacity: 1; }
+
+.sc-top {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  margin-bottom:   14px;
+}
+.sc-icon-wrap {
+  width:           40px;
+  height:          40px;
+  border-radius:   12px;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       1.3rem;
+}
+.purple-bg { background: rgba(124,58,237,0.15); }
+.amber-bg  { background: rgba(245,158,11,0.15); }
+.blue-bg   { background: rgba(59,130,246,0.15); }
+.red-bg    { background: rgba(239,68,68,0.15); }
+.green-bg  { background: rgba(16,185,129,0.15); }
+
+.sc-value {
+  font-family:    'Bebas Neue', sans-serif;
+  font-size:      1.9rem;
+  letter-spacing: 1px;
+  color:          var(--text);
+  line-height:    1;
+  margin-bottom:  4px;
+}
+.sc-label  { font-size:.78rem; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+.sc-bar-wrap { margin-top:14px; height:4px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden; }
+.sc-bar { height:100%; width:0%; border-radius:4px; transition:width 1.2s cubic-bezier(0.4,0,0.2,1); }
+
+.sc-trend {
+  font-size:  .72rem;
+  font-weight: 700;
+  padding:    3px 8px;
+  border-radius: 20px;
+}
+.trend-up   { background:rgba(16,185,129,0.15); color:#6ee7b7; }
+.trend-down { background:rgba(239,68,68,0.15);  color:#fca5a5; }
+
+.bpm-pulse {
+  width:  10px; height:10px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation:  bpmBeat 1.2s ease-in-out infinite;
+}
+@keyframes bpmBeat {
+  0%,100% { transform:scale(1);   opacity:1; }
+  50%     { transform:scale(1.6); opacity:0.6; }
+}
+
+/* ── Mid row ── */
+.mid-row {
+  display:               grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap:                   16px;
+  margin-bottom:         20px;
+}
+
+/* ── Card base ── */
+.card {
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: 16px;
+  padding:       22px;
+}
+.card-header {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  margin-bottom:   18px;
+}
+.section-title {
+  font-family:    'Bebas Neue', sans-serif;
+  letter-spacing: 1.5px;
+  font-size:      1.05rem;
+  color:          var(--text);
+}
+.card-badge {
+  padding:       3px 10px;
+  background:    var(--surface2);
+  border:        1px solid var(--border);
+  border-radius: 20px;
+  font-size:     .72rem;
+  color:         var(--muted);
+  font-weight:   600;
+}
+
+/* ── Goals card ── */
+.goal-item   { margin-bottom: 14px; }
+.goal-item:last-child { margin-bottom: 0; }
+.goal-meta   { display:flex; justify-content:space-between; font-size:.83rem; color:var(--muted); margin-bottom:6px; }
+.goal-pct    { font-weight:700; color:var(--text); }
+.goal-track  { height:8px; background:rgba(255,255,255,0.06); border-radius:8px; overflow:hidden; }
+.goal-fill   {
+  height:     100%;
+  width:      var(--w, 0%);
+  background: var(--color, #7c3aed);
+  border-radius: 8px;
+  transition: width 1.4s cubic-bezier(0.4,0,0.2,1);
+  position:   relative;
+  overflow:   hidden;
+}
+.goal-fill::after {
+  content:    '';
+  position:   absolute; inset:0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%);
+  animation:  shimmer 2.5s infinite;
+}
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+/* ── Streak card ── */
+.streak-card     { text-align:center; }
+.streak-display  { padding:10px 0; }
+.streak-fire-big { font-size:3rem; animation:firePop 2s ease-in-out infinite alternate; }
+@keyframes firePop { from{transform:scale(1)} to{transform:scale(1.12)} }
+.streak-big-num  { font-family:'Bebas Neue',sans-serif; font-size:3.5rem; letter-spacing:2px; color:var(--accent); line-height:1; }
+.streak-big-label{ color:var(--muted); font-size:.85rem; margin-top:4px; }
+.streak-week     { display:flex; justify-content:center; gap:6px; margin:16px 0 10px; }
+.streak-day {
+  width:32px; height:32px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.7rem; font-weight:700;
+  border:1px solid var(--border);
+  color:var(--muted);
+  transition:all .3s;
+}
+.streak-day.done { background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; border-color:transparent; }
+.streak-day.today { border-color:var(--primary); color:var(--primary); }
+.streak-msg { color:var(--muted); font-size:.8rem; }
+
+/* ── Planner card ── */
+.planner-card { }
+.btn-pill {
+  display:        inline-block;
+  padding:        9px 18px;
+  background:     linear-gradient(135deg, #7c3aed, #5b21b6);
+  color:          #fff;
+  border-radius:  30px;
+  font-size:      .85rem;
+  font-weight:    600;
+  text-decoration: none;
+  transition:     transform .2s, box-shadow .2s;
+  box-shadow:     0 4px 16px rgba(124,58,237,0.35);
+}
+.btn-pill:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(124,58,237,0.5); }
+.btn-pill-outline {
+  background: transparent;
+  border:     1px solid rgba(124,58,237,0.4);
+  color:      #a78bfa;
+  box-shadow: none;
+}
+.btn-pill-outline:hover { background:rgba(124,58,237,0.1); }
+.plan-preview-tag {
+  padding:       4px 10px;
+  border-radius: 20px;
+  font-size:     .75rem;
+  font-weight:   600;
+  background:    rgba(124,58,237,0.12);
+  color:         #a78bfa;
+  border:        1px solid rgba(124,58,237,0.25);
+}
+
+/* ── Charts row ── */
+.charts-row {
+  display:               grid;
+  grid-template-columns: 2fr 1fr;
+  gap:                   16px;
+}
+.chart-card canvas { margin-top:8px; }
+.chart-tabs        { display:flex; gap:6px; }
+.chart-tab {
+  padding:       5px 12px;
+  border-radius: 20px;
+  border:        1px solid var(--border);
+  background:    transparent;
+  color:         var(--muted);
+  font-size:     .78rem;
+  font-weight:   600;
+  cursor:        pointer;
+  font-family:   'DM Sans',sans-serif;
+  transition:    all .2s;
+}
+.chart-tab.active  { background:var(--primary); color:#fff; border-color:var(--primary); }
+.chart-tab:hover:not(.active) { border-color:var(--primary); color:var(--text); }
+
+/* ── Donut ── */
+.donut-card  { display:flex; flex-direction:column; }
+.donut-wrap  { position:relative; width:160px; margin:0 auto 16px; }
+.donut-center{
+  position:        absolute; inset:0;
+  display:         flex; flex-direction:column;
+  align-items:     center; justify-content:center;
+}
+.donut-bpm   { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--text); line-height:1; }
+.donut-unit  { font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+.zone-legend { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.zone-item   { display:flex; align-items:center; gap:6px; font-size:.75rem; color:var(--muted); }
+.zone-dot    { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+/* ── Sidebar extras ── */
+.sidebar-streak {
+  display:       flex;
+  align-items:   center;
+  gap:           12px;
+  padding:       14px;
+  background:    rgba(245,158,11,0.08);
+  border:        1px solid rgba(245,158,11,0.2);
+  border-radius: 12px;
+  margin-top:    auto;
+  margin-bottom: 16px;
+}
+.streak-fire   { font-size:1.8rem; }
+.streak-num    { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:var(--accent); line-height:1; }
+.streak-label  { font-size:.72rem; color:var(--muted); }
+
+/* ── AI badge ── */
+.ai-badge {
+  padding:       4px 10px;
+  background:    linear-gradient(135deg,rgba(124,58,237,0.2),rgba(245,158,11,0.2));
+  border:        1px solid rgba(124,58,237,0.35);
+  border-radius: 20px;
+  font-size:     .7rem;
+  font-weight:   700;
+  color:         #a78bfa;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── Responsive ── */
+@media(max-width:1200px) {
+  .stat-grid { grid-template-columns:repeat(3,1fr); }
+}
+@media(max-width:900px) {
+  .mid-row, .charts-row { grid-template-columns:1fr; }
+  .stat-grid { grid-template-columns:1fr 1fr; }
+}
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+</style>
+
+<!-- ══════════════════════════════════════
+     JAVASCRIPT
+     ══════════════════════════════════════ -->
+<script>
+// ── Apply saved theme immediately ──
+const _s = JSON.parse(localStorage.getItem("appSettings") || "{}");
+if (_s.darkMode === false) document.body.classList.add("light-mode");
+
+// ── Auth guard ──
+if (localStorage.getItem("isLoggedIn") !== "true") window.location.replace("index.html");
+
+// ── Motivational quotes ──
+const QUOTES = [
+  "The only bad workout is the one that didn't happen.",
+  "Your body can stand almost anything. It's your mind you have to convince.",
+  "Take care of your body. It's the only place you have to live.",
+  "Fitness is not about being better than someone else. It's about being better than you used to be.",
+  "The difference between try and triumph is a little umph.",
+  "Don't wish for it. Work for it.",
+  "Success starts with self-discipline.",
+  "Small daily improvements lead to stunning results.",
+  "Your health is an investment, not an expense.",
+  "Push yourself, because no one else is going to do it for you."
+];
+
+// ── Page transition on link click ──
+document.addEventListener("click", function(e) {
+  const link = e.target.closest("a[href]");
+  if (!link) return;
+  const href = link.getAttribute("href");
+  if (!href || href.startsWith("http") || href.startsWith("#") || href === window.location.pathname) return;
+
+  e.preventDefault();
+  const overlay = document.getElementById("pageTransition");
+  overlay.classList.add("sliding");
+  setTimeout(() => window.location.href = href, 380);
+});
+
+// ── Splash screen ──
+window.addEventListener("load", function() {
+  setTimeout(() => {
+    const splash = document.getElementById("splashScreen");
+    const app    = document.getElementById("appShell");
+    splash.classList.add("hide");
+    app.classList.add("visible");
+    setTimeout(() => {
+      splash.style.display = "none";
+      // Trigger reveal animations
+      document.querySelectorAll(".reveal").forEach(el => {
+        setTimeout(() => el.classList.add("show"), 50);
+      });
+      // Animate progress bars after reveal
+      setTimeout(animateBars, 400);
+    }, 600);
+  }, 2200);
+});
+
+// ── Data from localStorage ──
+const username     = localStorage.getItem("username") || "Athlete";
+const calories     = parseFloat(localStorage.getItem("calorieCount"))  || 0;
+const steps        = parseInt(localStorage.getItem("stepCount"))       || 0;
+const water        = parseInt(localStorage.getItem("waterTotal"))      || 0;
+const bpm          = parseInt(localStorage.getItem("lastBPM"))         || 0;
+const calGoal      = parseInt(localStorage.getItem("calorieGoal"))     || 500;
+const waterGoal    = parseInt(localStorage.getItem("waterGoal"))       || 2000;
+const calHistory   = JSON.parse(localStorage.getItem("calorieHistory") || "[]").slice(-7);
+const stepHistory  = JSON.parse(localStorage.getItem("stepHistory")    || "[]").slice(-7);
+const waterHistory = JSON.parse(localStorage.getItem("waterHistory")   || "[]").slice(-7);
+
+// ── Welcome message ──
+const hour     = new Date().getHours();
+const greeting = hour < 12 ? "GOOD MORNING" : hour < 17 ? "GOOD AFTERNOON" : "GOOD EVENING";
+document.getElementById("welcomeMsg").textContent = `${greeting}, ${username.toUpperCase()}!`;
+document.getElementById("welcomeSub").textContent =
+  `Here's your fitness summary for ${new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})}.`;
+
+// ── Date chip ──
+document.getElementById("dateChip").textContent =
+  new Date().toLocaleDateString("en-US",{weekday:"short", month:"short", day:"numeric"});
+
+// ── Avatar ──
+document.getElementById("avatarCircle").textContent = username.charAt(0).toUpperCase();
+
+// ── Quote ──
+const q = QUOTES[new Date().getDate() % QUOTES.length];
+document.getElementById("quoteText").textContent = `"${q}"`;
+
+// ── Stat card values ──
+document.getElementById("dashCalories").textContent = calories ? `${calories} kcal` : "--";
+document.getElementById("dashSteps").textContent    = steps    ? steps.toLocaleString() : "--";
+document.getElementById("dashWater").textContent    = water    ? `${water} ml` : "--";
+document.getElementById("dashBPM").textContent      = bpm      ? `${bpm} bpm` : "--";
+document.getElementById("donutBPM").textContent     = bpm || "--";
+
+// Plans generated count
+const planData = localStorage.getItem("lastWorkoutPlan");
+document.getElementById("dashWorkouts").textContent = planData ? "1 active" : "--";
+
+// ── Trend badges ──
+function setTrend(id, val, good) {
+  const el = document.getElementById(id);
+  if (!val) return;
+  el.textContent  = val > good ? "▲ High" : "✓ Good";
+  el.className    = `sc-trend ${val > good ? "trend-up" : "trend-down"}`;
+}
+// Simple trend: compare to goals
+if (calories) setTrend("calTrend",  calories, calGoal * 0.5);
+if (steps)    setTrend("stepTrend", steps,    5000);
+
+// ── Animate progress bars ──
+function animateBars() {
+  function setBar(fillId, labelId, val, goal, color) {
+    const pct = Math.min(Math.round((val / goal) * 100), 100);
+    const el  = document.getElementById(fillId);
+    const lb  = document.getElementById(labelId);
+    if (el) { el.style.width = pct + "%"; el.style.setProperty("--color", color); }
+    if (lb) lb.textContent = pct + "%";
+  }
+  function setSCBar(id, val, max) {
+    const pct = Math.min(Math.round((val / max) * 100), 100);
+    const el  = document.getElementById(id);
+    if (el) el.style.width = pct + "%";
+  }
+
+  setBar("calGoalFill",   "calGoalLabel",   calories, calGoal,    "#7c3aed");
+  setBar("stepGoalFill",  "stepGoalLabel",  steps,    10000,      "#f59e0b");
+  setBar("waterGoalFill", "waterGoalLabel", water,    waterGoal,  "#3b82f6");
+
+  if (bpm) {
+    const zone = bpm < 60 ? "Resting" : bpm < 100 ? "Normal" : bpm < 140 ? "Cardio" : "Peak";
+    document.getElementById("bpmGoalLabel").textContent = zone;
+    setBar("bpmGoalFill", null, Math.min(bpm, 180), 180, "#ef4444");
+  }
+
+  setSCBar("calSCBar",     calories, calGoal * 2);
+  setSCBar("stepSCBar",    steps,    10000);
+  setSCBar("waterSCBar",   water,    waterGoal);
+  setSCBar("bpmSCBar",     bpm,      180);
+  setSCBar("workoutSCBar", planData ? 100 : 0, 100);
+}
+
+// ── Streak tracker ──
+function updateStreak() {
+  const today     = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  let streak      = parseInt(localStorage.getItem("streak"))      || 0;
+  let lastActive  = localStorage.getItem("lastActiveDate")        || "";
+
+  if (lastActive === today) {
+    // Already counted today
+  } else if (lastActive === yesterday) {
+    streak++;
+    localStorage.setItem("streak", streak);
+    localStorage.setItem("lastActiveDate", today);
+  } else if (!lastActive) {
+    streak = 1;
+    localStorage.setItem("streak", streak);
+    localStorage.setItem("lastActiveDate", today);
+  }
+
+  document.getElementById("streakNum").textContent    = streak;
+  document.getElementById("sidebarStreak").textContent = streak;
+
+  // Week dots
+  const days   = ["S","M","T","W","T","F","S"];
+  const todayDow = new Date().getDay();
+  const weekEl = document.getElementById("streakWeek");
+  weekEl.innerHTML = days.map((d,i) => {
+    const isPast  = i < todayDow;
+    const isToday = i === todayDow;
+    const done    = isPast && streak >= (todayDow - i);
+    return `<div class="streak-day ${done?"done":""} ${isToday?"today":""}">${d}</div>`;
+  }).join("");
+
+  const msg = streak === 0  ? "Log your activity today to start your streak!" :
+              streak < 3    ? `Great start! Keep going!` :
+              streak < 7    ? `${streak} days strong — don't break it now!` :
+              streak < 14   ? `🔥 On fire! ${streak} day streak!` :
+                              `🏆 Legend! ${streak} days of consistency!`;
+  document.getElementById("streakMsg").textContent = msg;
+}
+updateStreak();
+
+// ── Smart Plan preview ──
+if (planData) {
+  try {
+    const p = JSON.parse(planData);
+    document.getElementById("noPlanMsg").style.display  = "none";
+    document.getElementById("hasPlanMsg").style.display = "block";
+    document.getElementById("planPreviewTags").innerHTML =
+      `<span class="plan-preview-tag">${p.goal}</span>
+       <span class="plan-preview-tag">${p.level}</span>
+       <span class="plan-preview-tag">${p.days} days/week</span>`;
+    document.getElementById("planPreviewDate").textContent =
+      `Generated ${new Date(p.createdAt).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}`;
+  } catch(e) {}
+}
+
+// ════════════════════════════
+// CHARTS
+// ════════════════════════════
+const DAYS   = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const LABELS = Array.from({length: Math.max(calHistory.length, stepHistory.length, 7)},
+                          (_,i) => DAYS[i % 7]);
+
+let weeklyChart  = null;
+let donutChart   = null;
+let currentData  = "calories";
+
+function buildChartData(type) {
+  const configs = {
+    calories: {
+      data:  calHistory.map(h => h.val || h || 0),
+      color: "#7c3aed",
+      label: "Calories (kcal)"
+    },
+    steps: {
+      data:  stepHistory.map(h => h.steps || h || 0),
+      color: "#f59e0b",
+      label: "Steps"
+    },
+    water: {
+      data:  waterHistory.map(h => parseInt(h) || 0),
+      color: "#3b82f6",
+      label: "Water (ml)"
+    }
+  };
+  return configs[type];
+}
+
+function renderWeeklyChart(type) {
+  const cfg = buildChartData(type);
+  const ctx = document.getElementById("weeklyChart").getContext("2d");
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, 0, 0, 200);
+  grad.addColorStop(0,   cfg.color + "99");
+  grad.addColorStop(1,   cfg.color + "11");
+
+  if (weeklyChart) weeklyChart.destroy();
+  weeklyChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: LABELS.slice(0, Math.max(cfg.data.length, 1)),
+      datasets: [{
+        label:                cfg.label,
+        data:                 cfg.data,
+        backgroundColor:      grad,
+        borderColor:          cfg.color,
+        borderWidth:          2.5,
+        pointBackgroundColor: cfg.color,
+        pointRadius:          5,
+        pointHoverRadius:     8,
+        fill:                 true,
+        tension:              0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      animation:  { duration: 600, easing: "easeInOutQuart" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "rgba(15,15,19,0.95)",
+          borderColor:     cfg.color,
+          borderWidth:     1,
+          titleColor:      "#f1f5f9",
+          bodyColor:       "#94a3b8",
+          padding:         12,
+          cornerRadius:    10
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color:"#94a3b8", font:{family:"DM Sans",size:11} },
+          grid:  { color:"rgba(255,255,255,0.04)" }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color:"#94a3b8", font:{family:"DM Sans",size:11} },
+          grid:  { color:"rgba(255,255,255,0.06)" }
+        }
+      }
+    }
+  });
+}
+
+function switchChart(type, btn) {
+  currentData = type;
+  document.querySelectorAll(".chart-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderWeeklyChart(type);
+}
+
+renderWeeklyChart("calories");
+
+// ── BPM Donut chart ──
+function renderDonut() {
+  const ctx    = document.getElementById("bpmDonut").getContext("2d");
+  const zone   = bpm < 60  ? 0 :
+                 bpm < 100 ? 1 :
+                 bpm < 140 ? 2 : 3;
+  const colors = ["#10b981","#3b82f6","#f59e0b","#ef4444"];
+  const active = colors[zone];
+  const data   = [0,0,0,0];
+  data[zone]   = 100;
+
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      datasets: [{
+        data:             bpm ? data : [25,25,25,25],
+        backgroundColor:  bpm
+          ? colors.map((c,i) => i===zone ? c : c+"22")
+          : colors.map(c => c+"33"),
+        borderWidth:      0,
+        hoverOffset:      6
+      }]
+    },
+    options: {
+      cutout:    "72%",
+      animation: { animateRotate: true, duration: 1000 },
+      plugins:   { legend: { display: false }, tooltip: { enabled: false } }
+    }
+  });
+}
+renderDonut();
+
+// ── Logout ──
+// ── Avatar popup ──
+const avatarEl  = document.getElementById("avatarCircle");
+const popup     = document.getElementById("profilePopup");
+
+function populatePopup() {
+  const initial = username.charAt(0).toUpperCase();
+  document.getElementById("ppAvatar").textContent  = initial;
+  document.getElementById("ppName").textContent    = username;
+  document.getElementById("ppStreak").textContent  = localStorage.getItem("streak") || 0;
+  const s = localStorage.getItem("stepCount");
+  document.getElementById("ppSteps").textContent   = s ? (parseInt(s) >= 1000 ? Math.round(parseInt(s)/1000)+"k" : s) : "--";
+  const c = localStorage.getItem("calorieCount");
+  document.getElementById("ppCals").textContent    = c ? Math.round(parseFloat(c)) : "--";
+}
+populatePopup();
+
+avatarEl.addEventListener("click", function(e) {
+  e.stopPropagation();
+  popup.classList.toggle("open");
+});
+document.addEventListener("click", function(e) {
+  if (!popup.contains(e.target) && e.target !== avatarEl) {
+    popup.classList.remove("open");
+  }
+});
+document.getElementById("popupLogoutBtn").addEventListener("click", () => {
+  localStorage.setItem("isLoggedIn","false");
+  localStorage.removeItem("googleAccessToken");
+  window.location.href = "index.html";
+});
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.setItem("isLoggedIn","false");
+  localStorage.removeItem("googleAccessToken");
+  window.location.href = "index.html";
+});
+</script>
+</body>
+</html>

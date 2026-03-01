@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrackr — Smart Workout Planner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">FIT<span>TRACKR</span></div>
+    <nav>
+      <a class="nav-item" href="dashboard.html">              <span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="profile.html">                <span class="icon">👤</span> Profile</a>
+      <a class="nav-item" href="water_intake.html">           <span class="icon">💧</span> Water Intake</a>
+      <a class="nav-item" href="step.html">                   <span class="icon">👣</span> Steps</a>
+      <a class="nav-item" href="calorie.html">                <span class="icon">🔥</span> Calories</a>
+      <a class="nav-item" href="heart_rate.html">             <span class="icon">❤️</span> Heart Rate</a>
+  
+      <a class="nav-item active" href="workout_planner.html"> <span class="icon">⚡</span> Smart Planner</a>
+      <a class="nav-item" href="food_scanner.html">   <span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item" href="report.html">           <span class="icon">📊</span> Report Card</a>
+
+      <a class="nav-item" href="settings.html">               <span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-logout" id="logoutBtn">⎋ Logout</button>
+    </div>
+  </aside>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+
+    <!-- Header -->
+    <div class="ai-header">
+      <div>
+        <h1>SMART WORKOUT PLANNER</h1>
+        <p style="color:var(--muted); margin-top:4px;">
+          Answer 4 questions — get a fully personalized weekly plan in seconds
+        </p>
+      </div>
+      <span class="ai-badge">PERSONALIZED ENGINE</span>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <!-- Two-column layout: form left, output right -->
+    <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:24px; align-items:start;">
+
+      <!-- ── LEFT: Input form ── -->
+      <div>
+        <div class="ai-form-card">
+          <div class="section-title">YOUR FITNESS PROFILE</div>
+
+          <!-- Q1: Goal -->
+          <div class="form-group">
+            <label class="form-label">🎯 What is your primary goal?</label>
+            <select id="goal" class="form-select">
+              <option value="">Select your goal</option>
+              <option value="weight_loss">🔥 Lose weight & burn fat</option>
+              <option value="muscle_gain">💪 Build muscle & gain strength</option>
+              <option value="endurance">🏃 Improve stamina & endurance</option>
+              <option value="maintenance">🌿 Stay fit & maintain health</option>
+              <option value="flexibility">🧘 Increase flexibility & mobility</option>
+            </select>
+          </div>
+
+          <!-- Q2: Fitness Level -->
+          <div class="form-group">
+            <label class="form-label">📊 Your current fitness level</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+              <div class="level-card" id="card-beginner" onclick="selectLevel('beginner', this)">
+                <div style="font-size:1.6rem;">🌱</div>
+                <div style="font-weight:600; margin-top:6px;">Beginner</div>
+                <div style="font-size:.75rem; color:var(--muted); margin-top:3px;">0–6 months</div>
+              </div>
+              <div class="level-card" id="card-intermediate" onclick="selectLevel('intermediate', this)">
+                <div style="font-size:1.6rem;">⚡</div>
+                <div style="font-weight:600; margin-top:6px;">Intermediate</div>
+                <div style="font-size:.75rem; color:var(--muted); margin-top:3px;">6m–2 years</div>
+              </div>
+              <div class="level-card" id="card-advanced" onclick="selectLevel('advanced', this)">
+                <div style="font-size:1.6rem;">🔥</div>
+                <div style="font-weight:600; margin-top:6px;">Advanced</div>
+                <div style="font-size:.75rem; color:var(--muted); margin-top:3px;">2+ years</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q3: Days per week -->
+          <div class="form-group">
+            <label class="form-label">📅 Days available per week</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;" id="daysGroup">
+              <button type="button" class="day-btn" onclick="selectDays(3, this)">3 days</button>
+              <button type="button" class="day-btn" onclick="selectDays(4, this)">4 days</button>
+              <button type="button" class="day-btn" onclick="selectDays(5, this)">5 days</button>
+              <button type="button" class="day-btn" onclick="selectDays(6, this)">6 days</button>
+            </div>
+          </div>
+
+          <!-- Q4: Equipment -->
+          <div class="form-group">
+            <label class="form-label">🏋️ Equipment available</label>
+            <select id="equipment" class="form-select">
+              <option value="none">🏠 No equipment (bodyweight only)</option>
+              <option value="minimal">🪢 Minimal (dumbbells + resistance bands)</option>
+              <option value="full">🏋️ Full gym access</option>
+            </select>
+          </div>
+
+          <!-- Q5: Limitations (optional) -->
+          <div class="form-group">
+            <label class="form-label">
+              ⚠️ Any injuries or limitations?
+              <span style="color:var(--muted); font-weight:400; text-transform:none;">(optional)</span>
+            </label>
+            <input
+              type="text"
+              id="limitations"
+              class="form-input"
+              placeholder="e.g. knee pain, lower back issues…"
+            >
+          </div>
+
+          <!-- Generate button -->
+          <button class="btn-generate" id="generateBtn" onclick="generatePlan()">
+            ⚡ Generate My Workout Plan
+          </button>
+          <p style="color:var(--muted); font-size:.78rem; text-align:center; margin-top:8px;">
+            Instant · Personalized · Free
+          </p>
+        </div>
+
+        <!-- Saved plans -->
+        <div class="card" style="margin-top:18px;">
+          <div class="section-title">📋 SAVED PLANS</div>
+          <div id="savedPlansList">
+            <p style="color:var(--muted); font-size:.88rem; text-align:center; padding:14px 0;">
+              No saved plans yet.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RIGHT: Output area ── -->
+      <div>
+
+        <!-- Loading state -->
+        <div class="ai-loading" id="loadingBox">
+          <div class="ai-spinner"></div>
+          <p>Analyzing your profile…</p>
+          <small>Building your personalized weekly schedule</small>
+        </div>
+
+        <!-- Empty state (default) -->
+        <div id="emptyState" class="card" style="text-align:center; padding:60px 30px;">
+          <div style="font-size:4rem; margin-bottom:16px;">⚡</div>
+          <h3 style="font-family:var(--font-head); letter-spacing:2px; margin-bottom:10px; font-size:1.6rem; color:var(--text);">
+            YOUR PLAN IS ONE CLICK AWAY
+          </h3>
+          <p style="color:var(--muted); max-width:320px; margin:0 auto; line-height:1.8; font-size:.92rem;">
+            Fill in your profile on the left and click
+            <strong style="color:var(--accent);">Generate</strong> to get a
+            complete weekly workout plan tailored to your goal and level.
+          </p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:28px; text-align:left;">
+            <div class="feature-pill">✅ Day-by-day schedule</div>
+            <div class="feature-pill">✅ Sets & reps for every exercise</div>
+            <div class="feature-pill">✅ Warm-up & cool-down</div>
+            <div class="feature-pill">✅ Rest days included</div>
+            <div class="feature-pill">✅ Equipment-specific</div>
+            <div class="feature-pill">✅ Expert tips for your goal</div>
+          </div>
+        </div>
+
+        <!-- Plan output card -->
+        <div class="ai-plan-output" id="planOutput">
+
+          <!-- Plan header -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div class="section-title" style="margin:0;">YOUR WEEKLY PLAN</div>
+            <span class="ai-badge">PERSONALIZED</span>
+          </div>
+
+          <!-- Meta tags row -->
+          <div class="plan-meta" id="planMetaTags"></div>
+
+          <!-- Plan content rendered here -->
+          <div id="planContent"></div>
+
+          <!-- Action buttons -->
+          <div class="plan-actions" style="margin-top:24px;">
+            <button class="btn btn-success"   onclick="savePlan()">💾 Save Plan</button>
+            <button class="btn btn-secondary" onclick="copyPlan()">📋 Copy Text</button>
+            <button class="btn btn-warning"   onclick="window.print()">🖨️ Print</button>
+            <button class="btn btn-secondary" onclick="resetForm()">↺ New Plan</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE-SPECIFIC STYLES
+     ══════════════════════════════════════════ -->
+<style>
+  .level-card {
+    background:    var(--surface2);
+    border:        1px solid var(--border);
+    border-radius: 12px;
+    padding:       14px 10px;
+    text-align:    center;
+    font-size:     .82rem;
+    cursor:        pointer;
+    transition:    border-color .2s, background .2s, transform .15s;
+    color:         var(--muted);
+    user-select:   none;
+  }
+  .level-card:hover  { border-color:var(--primary); color:var(--text); transform:translateY(-2px); }
+  .level-card.active { border-color:var(--primary); background:rgba(124,58,237,0.15); color:var(--text); }
+
+  .day-btn {
+    padding:       10px 16px;
+    background:    var(--surface2);
+    border:        1px solid var(--border);
+    border-radius: 8px;
+    color:         var(--muted);
+    font-family:   var(--font-body);
+    font-size:     .9rem;
+    font-weight:   600;
+    cursor:        pointer;
+    transition:    border-color .2s, background .2s, color .2s;
+  }
+  .day-btn:hover  { border-color:var(--primary); color:var(--text); }
+  .day-btn.active { border-color:var(--primary); background:rgba(124,58,237,0.15); color:var(--text); }
+
+  .feature-pill {
+    background:    var(--surface2);
+    border:        1px solid var(--border);
+    border-radius: 8px;
+    padding:       10px 14px;
+    font-size:     .83rem;
+    color:         var(--muted);
+  }
+
+  /* Day block in the plan output */
+  .day-block {
+    background:    var(--surface2);
+    border:        1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 14px;
+    overflow:      hidden;
+    transition:    border-color .2s;
+  }
+  .day-block:hover { border-color: rgba(124,58,237,0.4); }
+
+  .day-header {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+    padding:         14px 18px;
+    background:      rgba(124,58,237,0.08);
+    border-bottom:   1px solid var(--border);
+    cursor:          pointer;
+  }
+  .day-header h3 {
+    font-family:    var(--font-head);
+    letter-spacing: 1px;
+    font-size:      1.05rem;
+    color:          var(--text);
+  }
+  .day-type-badge {
+    padding:       4px 12px;
+    border-radius: 20px;
+    font-size:     .75rem;
+    font-weight:   700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+
+  .exercise-table { width:100%; border-collapse:collapse; }
+  .exercise-table th {
+    text-align:   left;
+    padding:      10px 16px;
+    font-size:    .75rem;
+    color:        var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .exercise-table td {
+    padding:      11px 16px;
+    font-size:    .88rem;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color:        var(--text);
+  }
+  .exercise-table tr:last-child td { border-bottom: none; }
+  .exercise-table tr:hover td { background: rgba(124,58,237,0.04); }
+
+  .exercise-name { font-weight:600; }
+  .muscle-tag {
+    display:        inline-block;
+    padding:        2px 8px;
+    border-radius:  20px;
+    font-size:      .72rem;
+    font-weight:    600;
+    background:     rgba(16,185,129,0.12);
+    color:          var(--accent2);
+  }
+
+  .rest-day-block {
+    background:    rgba(59,130,246,0.06);
+    border:        1px solid rgba(59,130,246,0.2);
+    border-radius: 12px;
+    padding:       20px;
+    text-align:    center;
+    margin-bottom: 14px;
+  }
+  .rest-day-block h3 {
+    font-family:    var(--font-head);
+    letter-spacing: 1px;
+    font-size:      1.05rem;
+    color:          #93c5fd;
+    margin-bottom:  6px;
+  }
+  .rest-day-block p { color:var(--muted); font-size:.85rem; }
+
+  .tip-card {
+    background:    linear-gradient(135deg, rgba(245,158,11,0.08), rgba(124,58,237,0.08));
+    border:        1px solid rgba(245,158,11,0.25);
+    border-radius: 12px;
+    padding:       18px;
+    margin-top:    16px;
+  }
+  .tip-card h4 {
+    font-family:    var(--font-head);
+    letter-spacing: 1px;
+    color:          var(--accent);
+    margin-bottom:  8px;
+    font-size:      1rem;
+  }
+  .tip-card p { color:var(--muted); font-size:.88rem; line-height:1.7; }
+
+  .warmup-card {
+    background:    rgba(16,185,129,0.06);
+    border:        1px solid rgba(16,185,129,0.2);
+    border-radius: 12px;
+    padding:       16px;
+    margin-bottom: 20px;
+  }
+  .warmup-card h4 {
+    font-family:    var(--font-head);
+    letter-spacing: 1px;
+    color:          var(--accent2);
+    margin-bottom:  8px;
+    font-size:      1rem;
+  }
+  .warmup-card ul { list-style:none; }
+  .warmup-card li {
+    padding:     5px 0;
+    color:       var(--muted);
+    font-size:   .87rem;
+  }
+  .warmup-card li::before { content:'→ '; color:var(--accent2); }
+
+  .saved-plan-card {
+    background:    var(--surface2);
+    border:        1px solid var(--border);
+    border-radius: 10px;
+    padding:       12px 14px;
+    margin-bottom: 8px;
+    cursor:        pointer;
+    transition:    border-color .2s;
+  }
+  .saved-plan-card:hover { border-color: var(--primary); }
+  .saved-plan-card .sp-title { font-weight:600; font-size:.9rem; }
+  .saved-plan-card .sp-meta  { color:var(--muted); font-size:.78rem; margin-top:4px; }
+</style>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT — FULL RULE-BASED ENGINE
+     ══════════════════════════════════════════ -->
+<script>
+
+// ── Auth guard ──────────────────────────────────────────────
+if (localStorage.getItem("isLoggedIn") !== "true") window.location.href = "index.html";
+const username = localStorage.getItem("username");
+
+// ── State ───────────────────────────────────────────────────
+let selectedLevel     = "";
+let selectedDays      = 0;
+let currentPlanData   = null; // stores the full generated plan object
+
+// ── Alert helper ────────────────────────────────────────────
+const alertBox = document.getElementById("alertBox");
+function showAlert(msg, type = "info") {
+  alertBox.textContent = msg;
+  alertBox.className   = `alert alert-${type} show`;
+  setTimeout(() => alertBox.classList.remove("show"), 4000);
+}
+
+// ── Selection helpers ────────────────────────────────────────
+function selectLevel(level, el) {
+  selectedLevel = level;
+  document.querySelectorAll(".level-card").forEach(c => c.classList.remove("active"));
+  el.classList.add("active");
+}
+
+function selectDays(days, el) {
+  selectedDays = days;
+  document.querySelectorAll(".day-btn").forEach(b => b.classList.remove("active"));
+  el.classList.add("active");
+}
+
+// ════════════════════════════════════════════════════════════
+//  EXERCISE DATABASE
+//  Each exercise has: name, sets, reps, rest, muscle group
+//  Organized by: goal → level → equipment → muscle group
+// ════════════════════════════════════════════════════════════
+
+const EXERCISES = {
+
+  // ── WEIGHT LOSS exercises ──────────────────────────────
+  weight_loss: {
+    beginner: {
+      none: {
+        full_body: [
+          { name:"Jumping Jacks",        sets:3, reps:"30 sec",  rest:"15s", muscle:"Full Body" },
+          { name:"Bodyweight Squats",    sets:3, reps:"15",      rest:"30s", muscle:"Legs" },
+          { name:"Push-ups (knee)",      sets:3, reps:"10",      rest:"30s", muscle:"Chest" },
+          { name:"Mountain Climbers",    sets:3, reps:"20 sec",  rest:"20s", muscle:"Core" },
+          { name:"Glute Bridges",        sets:3, reps:"15",      rest:"30s", muscle:"Glutes" },
+          { name:"Plank",                sets:3, reps:"20 sec",  rest:"30s", muscle:"Core" },
+        ],
+        cardio: [
+          { name:"Brisk Walking",        sets:1, reps:"20 min",  rest:"—",   muscle:"Cardio" },
+          { name:"High Knees",           sets:3, reps:"30 sec",  rest:"15s", muscle:"Cardio" },
+          { name:"Butt Kicks",           sets:3, reps:"30 sec",  rest:"15s", muscle:"Cardio" },
+          { name:"Jump Rope (imaginary)",sets:3, reps:"1 min",   rest:"30s", muscle:"Cardio" },
+        ]
+      },
+      minimal: {
+        upper: [
+          { name:"Dumbbell Shoulder Press",sets:3, reps:"12",   rest:"30s", muscle:"Shoulders" },
+          { name:"Dumbbell Bicep Curls",   sets:3, reps:"12",   rest:"30s", muscle:"Biceps" },
+          { name:"Band Pull-Aparts",       sets:3, reps:"15",   rest:"20s", muscle:"Back" },
+          { name:"Dumbbell Chest Press",   sets:3, reps:"12",   rest:"40s", muscle:"Chest" },
+        ],
+        lower: [
+          { name:"Dumbbell Goblet Squat",  sets:3, reps:"15",   rest:"40s", muscle:"Legs" },
+          { name:"Dumbbell Lunges",        sets:3, reps:"12ea", rest:"30s", muscle:"Legs" },
+          { name:"Band Glute Kickbacks",   sets:3, reps:"15ea", rest:"20s", muscle:"Glutes" },
+          { name:"Dumbbell Deadlift",      sets:3, reps:"12",   rest:"45s", muscle:"Hamstrings" },
+        ]
+      },
+      full: {
+        upper: [
+          { name:"Lat Pulldown",           sets:3, reps:"12",   rest:"45s", muscle:"Back" },
+          { name:"Cable Chest Press",      sets:3, reps:"12",   rest:"45s", muscle:"Chest" },
+          { name:"Shoulder Press Machine", sets:3, reps:"12",   rest:"45s", muscle:"Shoulders" },
+          { name:"Tricep Pushdown",        sets:3, reps:"15",   rest:"30s", muscle:"Triceps" },
+        ],
+        lower: [
+          { name:"Leg Press",              sets:3, reps:"15",   rest:"60s", muscle:"Legs" },
+          { name:"Leg Curl Machine",       sets:3, reps:"12",   rest:"45s", muscle:"Hamstrings" },
+          { name:"Calf Raises",            sets:4, reps:"20",   rest:"30s", muscle:"Calves" },
+          { name:"Treadmill Walk",         sets:1, reps:"15 min",rest:"—",  muscle:"Cardio" },
+        ]
+      }
+    },
+
+    intermediate: {
+      none: {
+        upper: [
+          { name:"Push-ups",             sets:4, reps:"15",     rest:"30s", muscle:"Chest" },
+          { name:"Pike Push-ups",        sets:3, reps:"12",     rest:"30s", muscle:"Shoulders" },
+          { name:"Diamond Push-ups",     sets:3, reps:"10",     rest:"30s", muscle:"Triceps" },
+          { name:"Inverted Rows (table)",sets:3, reps:"12",     rest:"30s", muscle:"Back" },
+        ],
+        lower: [
+          { name:"Jump Squats",          sets:4, reps:"15",     rest:"30s", muscle:"Legs" },
+          { name:"Reverse Lunges",       sets:3, reps:"12ea",   rest:"30s", muscle:"Legs" },
+          { name:"Single-Leg Glute Bridge",sets:3,reps:"12ea",  rest:"30s", muscle:"Glutes" },
+          { name:"Sumo Squats",          sets:3, reps:"15",     rest:"30s", muscle:"Inner Thighs" },
+        ],
+        cardio: [
+          { name:"Burpees",              sets:4, reps:"10",     rest:"30s", muscle:"Full Body" },
+          { name:"Jump Rope",            sets:3, reps:"2 min",  rest:"30s", muscle:"Cardio" },
+          { name:"Box Jumps (chair)",    sets:3, reps:"10",     rest:"30s", muscle:"Explosive" },
+        ]
+      },
+      full: {
+        upper: [
+          { name:"Bench Press",          sets:4, reps:"10",     rest:"60s", muscle:"Chest" },
+          { name:"Barbell Row",          sets:4, reps:"10",     rest:"60s", muscle:"Back" },
+          { name:"Dumbbell Shoulder Press",sets:3,reps:"12",    rest:"45s", muscle:"Shoulders" },
+          { name:"EZ Bar Curl",          sets:3, reps:"12",     rest:"45s", muscle:"Biceps" },
+        ],
+        lower: [
+          { name:"Barbell Squat",        sets:4, reps:"10",     rest:"90s", muscle:"Legs" },
+          { name:"Romanian Deadlift",    sets:3, reps:"12",     rest:"60s", muscle:"Hamstrings" },
+          { name:"Leg Press",            sets:3, reps:"15",     rest:"60s", muscle:"Quads" },
+          { name:"Walking Lunges",       sets:3, reps:"12ea",   rest:"45s", muscle:"Legs" },
+        ]
+      }
+    },
+
+    advanced: {
+      full: {
+        push: [
+          { name:"Incline Barbell Press",  sets:4, reps:"8",    rest:"90s", muscle:"Chest" },
+          { name:"Overhead Press",         sets:4, reps:"8",    rest:"90s", muscle:"Shoulders" },
+          { name:"Dips (weighted)",        sets:3, reps:"10",   rest:"60s", muscle:"Triceps" },
+          { name:"Cable Lateral Raises",   sets:3, reps:"15",   rest:"45s", muscle:"Side Delts" },
+        ],
+        pull: [
+          { name:"Weighted Pull-ups",      sets:4, reps:"8",    rest:"90s", muscle:"Back" },
+          { name:"Barbell Row",            sets:4, reps:"8",    rest:"90s", muscle:"Back" },
+          { name:"Face Pulls",             sets:3, reps:"15",   rest:"45s", muscle:"Rear Delts" },
+          { name:"Hammer Curls",           sets:3, reps:"10",   rest:"45s", muscle:"Biceps" },
+        ],
+        legs: [
+          { name:"Barbell Squat",          sets:5, reps:"5",    rest:"120s",muscle:"Quads" },
+          { name:"Romanian Deadlift",      sets:4, reps:"8",    rest:"90s", muscle:"Hamstrings" },
+          { name:"Leg Press",              sets:3, reps:"12",   rest:"60s", muscle:"Legs" },
+          { name:"Calf Raises",            sets:4, reps:"15",   rest:"45s", muscle:"Calves" },
+        ]
+      }
+    }
+  },
+
+  // ── MUSCLE GAIN exercises ──────────────────────────────
+  muscle_gain: {
+    beginner: {
+      none: {
+        upper: [
+          { name:"Push-ups",             sets:3, reps:"12",     rest:"60s", muscle:"Chest" },
+          { name:"Wide Push-ups",        sets:3, reps:"10",     rest:"60s", muscle:"Chest" },
+          { name:"Tricep Dips (chair)",  sets:3, reps:"12",     rest:"60s", muscle:"Triceps" },
+          { name:"Superman Hold",        sets:3, reps:"12",     rest:"30s", muscle:"Back" },
+        ],
+        lower: [
+          { name:"Bodyweight Squats",    sets:4, reps:"15",     rest:"60s", muscle:"Quads" },
+          { name:"Bulgarian Split Squat",sets:3, reps:"10ea",   rest:"60s", muscle:"Legs" },
+          { name:"Glute Bridges",        sets:4, reps:"15",     rest:"45s", muscle:"Glutes" },
+          { name:"Wall Sit",             sets:3, reps:"30 sec", rest:"30s", muscle:"Legs" },
+        ]
+      },
+      full: {
+        chest_triceps: [
+          { name:"Bench Press",          sets:4, reps:"10",     rest:"90s", muscle:"Chest" },
+          { name:"Incline Dumbbell Press",sets:3,reps:"12",     rest:"60s", muscle:"Upper Chest" },
+          { name:"Cable Fly",            sets:3, reps:"12",     rest:"60s", muscle:"Chest" },
+          { name:"Tricep Pushdown",      sets:3, reps:"15",     rest:"45s", muscle:"Triceps" },
+          { name:"Overhead Tricep Ext.", sets:3, reps:"12",     rest:"45s", muscle:"Triceps" },
+        ],
+        back_biceps: [
+          { name:"Lat Pulldown",         sets:4, reps:"10",     rest:"90s", muscle:"Back" },
+          { name:"Seated Cable Row",     sets:3, reps:"12",     rest:"60s", muscle:"Back" },
+          { name:"Face Pulls",           sets:3, reps:"15",     rest:"45s", muscle:"Rear Delts" },
+          { name:"Barbell Curl",         sets:3, reps:"12",     rest:"45s", muscle:"Biceps" },
+          { name:"Hammer Curls",         sets:3, reps:"12",     rest:"45s", muscle:"Brachialis" },
+        ],
+        legs: [
+          { name:"Leg Press",            sets:4, reps:"12",     rest:"90s", muscle:"Quads" },
+          { name:"Hack Squat",           sets:3, reps:"10",     rest:"90s", muscle:"Quads" },
+          { name:"Leg Curl",             sets:3, reps:"12",     rest:"60s", muscle:"Hamstrings" },
+          { name:"Leg Extension",        sets:3, reps:"15",     rest:"60s", muscle:"Quads" },
+          { name:"Standing Calf Raise",  sets:4, reps:"15",     rest:"45s", muscle:"Calves" },
+        ],
+        shoulders: [
+          { name:"Barbell OHP",          sets:4, reps:"10",     rest:"90s", muscle:"Shoulders" },
+          { name:"Dumbbell Lateral Raise",sets:4,reps:"15",     rest:"45s", muscle:"Side Delts" },
+          { name:"Front Raises",         sets:3, reps:"12",     rest:"45s", muscle:"Front Delts" },
+          { name:"Shrugs",               sets:3, reps:"15",     rest:"30s", muscle:"Traps" },
+        ]
+      }
+    },
+    intermediate: {
+      full: {
+        push: [
+          { name:"Barbell Bench Press",  sets:4, reps:"8",      rest:"90s", muscle:"Chest" },
+          { name:"Incline DB Press",     sets:4, reps:"10",     rest:"90s", muscle:"Upper Chest" },
+          { name:"Overhead Press",       sets:4, reps:"8",      rest:"90s", muscle:"Shoulders" },
+          { name:"Lateral Raises",       sets:4, reps:"12",     rest:"45s", muscle:"Side Delts" },
+          { name:"Skull Crushers",       sets:3, reps:"10",     rest:"60s", muscle:"Triceps" },
+        ],
+        pull: [
+          { name:"Weighted Pull-ups",    sets:4, reps:"8",      rest:"90s", muscle:"Back" },
+          { name:"Barbell Row",          sets:4, reps:"8",      rest:"90s", muscle:"Back" },
+          { name:"Cable Row",            sets:3, reps:"12",     rest:"60s", muscle:"Back" },
+          { name:"Preacher Curl",        sets:3, reps:"10",     rest:"60s", muscle:"Biceps" },
+          { name:"Face Pulls",           sets:3, reps:"15",     rest:"45s", muscle:"Rear Delts" },
+        ],
+        legs: [
+          { name:"Barbell Squat",        sets:4, reps:"8",      rest:"120s",muscle:"Quads" },
+          { name:"Romanian Deadlift",    sets:4, reps:"8",      rest:"90s", muscle:"Hamstrings" },
+          { name:"Leg Press",            sets:3, reps:"12",     rest:"90s", muscle:"Legs" },
+          { name:"Leg Curl",             sets:3, reps:"12",     rest:"60s", muscle:"Hamstrings" },
+          { name:"Calf Raises",          sets:4, reps:"15",     rest:"45s", muscle:"Calves" },
+        ]
+      }
+    },
+    advanced: {
+      full: {
+        push: [
+          { name:"Flat Bench (Heavy)",   sets:5, reps:"5",      rest:"3min", muscle:"Chest" },
+          { name:"Incline Dumbbell Press",sets:4,reps:"8",      rest:"90s",  muscle:"Chest" },
+          { name:"Cable Cross",          sets:3, reps:"12",     rest:"60s",  muscle:"Chest" },
+          { name:"OHP (Barbell)",        sets:4, reps:"6",      rest:"2min", muscle:"Shoulders" },
+          { name:"Tricep Dips (weighted)",sets:4,reps:"8",      rest:"90s",  muscle:"Triceps" },
+        ],
+        pull: [
+          { name:"Weighted Pull-ups",    sets:5, reps:"6",      rest:"2min", muscle:"Back" },
+          { name:"Pendlay Row",          sets:4, reps:"6",      rest:"2min", muscle:"Back" },
+          { name:"Meadows Row",          sets:3, reps:"10ea",   rest:"60s",  muscle:"Back" },
+          { name:"Incline Dumbbell Curl",sets:4, reps:"10",     rest:"60s",  muscle:"Biceps" },
+          { name:"Face Pulls",           sets:3, reps:"20",     rest:"45s",  muscle:"Rear Delts" },
+        ],
+        legs: [
+          { name:"Barbell Squat (Heavy)",sets:5, reps:"5",      rest:"3min", muscle:"Quads" },
+          { name:"Leg Press",            sets:4, reps:"10",     rest:"90s",  muscle:"Legs" },
+          { name:"Stiff-Leg Deadlift",   sets:4, reps:"8",      rest:"90s",  muscle:"Hamstrings" },
+          { name:"Hack Squat",           sets:3, reps:"12",     rest:"60s",  muscle:"Quads" },
+          { name:"Standing Calf Raise",  sets:5, reps:"12",     rest:"45s",  muscle:"Calves" },
+        ]
+      }
+    }
+  },
+
+  // ── ENDURANCE exercises ────────────────────────────────
+  endurance: {
+    beginner: {
+      none: {
+        cardio: [
+          { name:"Brisk Walk / Light Jog",sets:1, reps:"25 min", rest:"—",  muscle:"Cardio" },
+          { name:"High Knees",            sets:4, reps:"40 sec", rest:"15s",muscle:"Legs" },
+          { name:"Jumping Jacks",         sets:4, reps:"1 min",  rest:"15s",muscle:"Full Body" },
+          { name:"Step Touches",          sets:3, reps:"1 min",  rest:"15s",muscle:"Cardio" },
+        ],
+        strength: [
+          { name:"Bodyweight Squats",     sets:3, reps:"20",     rest:"30s",muscle:"Legs" },
+          { name:"Push-ups",              sets:3, reps:"12",     rest:"30s",muscle:"Chest" },
+          { name:"Plank",                 sets:3, reps:"30 sec", rest:"20s",muscle:"Core" },
+          { name:"Lunges",                sets:3, reps:"12ea",   rest:"30s",muscle:"Legs" },
+        ]
+      }
+    },
+    intermediate: {
+      none: {
+        hiit: [
+          { name:"Burpees",               sets:4, reps:"15",     rest:"20s",muscle:"Full Body" },
+          { name:"Sprint Intervals",      sets:6, reps:"30 sec", rest:"30s",muscle:"Cardio" },
+          { name:"Jump Squats",           sets:4, reps:"20",     rest:"20s",muscle:"Legs" },
+          { name:"Mountain Climbers",     sets:4, reps:"45 sec", rest:"15s",muscle:"Core" },
+          { name:"Push-up to Downward Dog",sets:3,reps:"12",     rest:"20s",muscle:"Full Body" },
+        ]
+      },
+      full: {
+        circuit: [
+          { name:"Treadmill Run",         sets:1, reps:"20 min", rest:"—",  muscle:"Cardio" },
+          { name:"Battle Ropes",          sets:4, reps:"30 sec", rest:"30s",muscle:"Full Body" },
+          { name:"Box Jumps",             sets:4, reps:"12",     rest:"30s",muscle:"Explosive" },
+          { name:"Rowing Machine",        sets:3, reps:"3 min",  rest:"60s",muscle:"Cardio" },
+          { name:"Sled Push",             sets:4, reps:"20m",    rest:"60s",muscle:"Full Body" },
+        ]
+      }
+    }
+  },
+
+  // ── MAINTENANCE exercises ──────────────────────────────
+  maintenance: {
+    beginner: {
+      none: {
+        full_body: [
+          { name:"Bodyweight Squats",    sets:3, reps:"15",      rest:"45s",muscle:"Legs" },
+          { name:"Push-ups",             sets:3, reps:"12",      rest:"45s",muscle:"Chest" },
+          { name:"Plank",                sets:3, reps:"30 sec",  rest:"30s",muscle:"Core" },
+          { name:"Glute Bridges",        sets:3, reps:"15",      rest:"30s",muscle:"Glutes" },
+          { name:"Bird Dog",             sets:3, reps:"10ea",    rest:"20s",muscle:"Core" },
+        ]
+      }
+    },
+    intermediate: {
+      full: {
+        upper: [
+          { name:"Bench Press",          sets:3, reps:"10",      rest:"60s",muscle:"Chest" },
+          { name:"Lat Pulldown",         sets:3, reps:"10",      rest:"60s",muscle:"Back" },
+          { name:"Shoulder Press",       sets:3, reps:"10",      rest:"60s",muscle:"Shoulders" },
+          { name:"Bicep Curl",           sets:2, reps:"12",      rest:"45s",muscle:"Biceps" },
+          { name:"Tricep Pushdown",      sets:2, reps:"12",      rest:"45s",muscle:"Triceps" },
+        ],
+        lower: [
+          { name:"Squat",                sets:3, reps:"12",      rest:"60s",muscle:"Legs" },
+          { name:"Leg Press",            sets:3, reps:"12",      rest:"60s",muscle:"Legs" },
+          { name:"Romanian Deadlift",    sets:3, reps:"12",      rest:"60s",muscle:"Hamstrings" },
+          { name:"Calf Raises",          sets:3, reps:"15",      rest:"30s",muscle:"Calves" },
+        ]
+      }
+    }
+  },
+
+  // ── FLEXIBILITY exercises ──────────────────────────────
+  flexibility: {
+    beginner: {
+      none: {
+        stretch: [
+          { name:"Cat-Cow Stretch",      sets:3, reps:"10 cycles",rest:"15s",muscle:"Spine" },
+          { name:"Child's Pose",         sets:3, reps:"45 sec",   rest:"15s",muscle:"Back" },
+          { name:"Hip Flexor Stretch",   sets:3, reps:"30 sec ea",rest:"15s",muscle:"Hips" },
+          { name:"Standing Hamstring",   sets:3, reps:"30 sec ea",rest:"15s",muscle:"Hamstrings" },
+          { name:"Seated Spinal Twist",  sets:3, reps:"30 sec ea",rest:"15s",muscle:"Spine" },
+          { name:"Pigeon Pose",          sets:2, reps:"45 sec ea",rest:"15s",muscle:"Hips" },
+        ],
+        yoga: [
+          { name:"Sun Salutation A",     sets:3, reps:"5 rounds", rest:"30s",muscle:"Full Body" },
+          { name:"Warrior I",            sets:3, reps:"30 sec ea",rest:"15s",muscle:"Hips/Legs" },
+          { name:"Warrior II",           sets:3, reps:"30 sec ea",rest:"15s",muscle:"Hips/Legs" },
+          { name:"Downward Dog",         sets:3, reps:"45 sec",   rest:"15s",muscle:"Hamstrings" },
+          { name:"Cobra Pose",           sets:3, reps:"30 sec",   rest:"15s",muscle:"Spine" },
+        ]
+      }
+    },
+    intermediate: {
+      none: {
+        deep_stretch: [
+          { name:"Full Body Flow",       sets:1, reps:"5 min",    rest:"—",  muscle:"Full Body" },
+          { name:"Deep Hip Opener",      sets:3, reps:"1 min ea", rest:"15s",muscle:"Hips" },
+          { name:"Full Splits Prep",     sets:3, reps:"1 min ea", rest:"15s",muscle:"Hamstrings" },
+          { name:"Bridge Pose",          sets:3, reps:"45 sec",   rest:"20s",muscle:"Spine" },
+          { name:"Shoulder Mobility",    sets:3, reps:"30 sec",   rest:"15s",muscle:"Shoulders" },
+        ]
+      }
+    }
+  }
+};
+
+// ════════════════════════════════════════════════════════════
+//  WARMUP & COOLDOWN ROUTINES
+// ════════════════════════════════════════════════════════════
+const WARMUP = {
+  general: [
+    "5 min light jog or brisk walk",
+    "10x Arm circles (forward & back)",
+    "10x Hip circles each direction",
+    "10x Leg swings each side",
+    "10x Bodyweight squats (slow)"
+  ],
+  upper: [
+    "5 min light cardio",
+    "15x Band pull-aparts",
+    "10x Shoulder rotations",
+    "10x Chest openers",
+    "2 sets push-ups (50% effort)"
+  ],
+  lower: [
+    "5 min light jog",
+    "10x Hip flexor stretch each side",
+    "15x Bodyweight squats",
+    "10x Leg swings each side",
+    "10x Ankle circles"
+  ]
+};
+
+const COOLDOWN = [
+  "Standing quad stretch — 30 sec each leg",
+  "Seated hamstring stretch — 45 sec each",
+  "Child's pose — 1 minute",
+  "Lying spinal twist — 30 sec each side",
+  "Deep breathing — 2 minutes"
+];
+
+// ════════════════════════════════════════════════════════════
+//  EXPERT TIPS — one per goal
+// ════════════════════════════════════════════════════════════
+const TIPS = {
+  weight_loss:  "Track your calories — weight loss is 80% diet, 20% exercise. Aim for a 300–500 kcal daily deficit. Stay in the fat-burning zone by keeping your heart rate between 60–70% of max during cardio sessions.",
+  muscle_gain:  "Progressive overload is key — increase weight or reps every 1–2 weeks. Eat 1.6–2.2g of protein per kg of bodyweight daily. Sleep 7–9 hours since 90% of muscle repair happens during deep sleep.",
+  endurance:    "Follow the 80/20 rule — 80% of training at low intensity, 20% at high intensity. Increase weekly volume by no more than 10% to avoid injury. Stay hydrated and replenish electrolytes after sessions over 45 minutes.",
+  maintenance:  "Consistency beats intensity for maintenance. Aim for 150 minutes of moderate exercise per week (WHO recommendation). Mix strength and cardio to maintain both muscle mass and cardiovascular health.",
+  flexibility:  "Hold each stretch for 30–60 seconds — shorter holds don't improve flexibility. The best time to stretch is post-workout when muscles are warm. Practice daily for fastest results; even 10 minutes daily beats 1-hour weekly sessions."
+};
+
+// ════════════════════════════════════════════════════════════
+//  SCHEDULE BUILDER
+//  Creates the right training split based on days per week
+// ════════════════════════════════════════════════════════════
+function buildSchedule(goal, level, days, equipment) {
+  // Day split templates — what muscle groups on what days
+  const splits = {
+    3: {
+      weight_loss:  ["full_body",  "rest", "cardio",    "rest", "full_body",  "rest", "rest"],
+      muscle_gain:  ["upper",      "rest", "lower",     "rest", "full_body",  "rest", "rest"],
+      endurance:    ["cardio",     "rest", "strength",  "rest", "cardio",     "rest", "rest"],
+      maintenance:  ["upper",      "rest", "lower",     "rest", "full_body",  "rest", "rest"],
+      flexibility:  ["stretch",    "rest", "yoga",      "rest", "deep_stretch","rest", "rest"]
+    },
+    4: {
+      weight_loss:  ["upper",      "lower",  "rest", "cardio",    "upper",    "rest", "rest"],
+      muscle_gain:  ["push",       "pull",   "rest", "legs",      "shoulders","rest", "rest"],
+      endurance:    ["cardio",     "hiit",   "rest", "strength",  "cardio",   "rest", "rest"],
+      maintenance:  ["upper",      "lower",  "rest", "upper",     "lower",    "rest", "rest"],
+      flexibility:  ["stretch",    "yoga",   "rest", "deep_stretch","stretch","rest", "rest"]
+    },
+    5: {
+      weight_loss:  ["upper",     "lower",  "cardio", "rest", "upper",  "lower",  "rest"],
+      muscle_gain:  ["chest_triceps","back_biceps","legs","shoulders","push","rest","rest"],
+      endurance:    ["cardio",    "strength","hiit","rest","cardio","circuit","rest"],
+      maintenance:  ["upper",     "lower",  "cardio","rest","upper","lower","rest"],
+      flexibility:  ["stretch",   "yoga",   "stretch","rest","yoga","deep_stretch","rest"]
+    },
+    6: {
+      weight_loss:  ["upper","lower","cardio","upper","lower","cardio","rest"],
+      muscle_gain:  ["push","pull","legs","push","pull","legs","rest"],
+      endurance:    ["cardio","strength","hiit","cardio","circuit","strength","rest"],
+      maintenance:  ["upper","lower","cardio","upper","lower","cardio","rest"],
+      flexibility:  ["stretch","yoga","deep_stretch","stretch","yoga","deep_stretch","rest"]
+    }
+  };
+
+  return splits[days][goal];
+}
+
+// ════════════════════════════════════════════════════════════
+//  EXERCISE PICKER
+//  Picks the right exercises based on goal/level/equipment/day
+// ════════════════════════════════════════════════════════════
+function getExercises(goal, level, equipment, dayType) {
+  const db    = EXERCISES[goal];
+  const lvlDb = db?.[level] || db?.["beginner"];
+  const eqDb  = lvlDb?.[equipment] || lvlDb?.["none"] || lvlDb?.["full"];
+
+  if (!eqDb) return [];
+
+  // Try exact match first, then fallback to any available key
+  return eqDb[dayType]
+      || eqDb["full_body"]
+      || eqDb["cardio"]
+      || eqDb["upper"]
+      || eqDb["stretch"]
+      || Object.values(eqDb)[0]
+      || [];
+}
+
+// ════════════════════════════════════════════════════════════
+//  MAIN GENERATE FUNCTION
+// ════════════════════════════════════════════════════════════
+function generatePlan() {
+  // ── Validate inputs ──
+  const goal      = document.getElementById("goal").value;
+  const equipment = document.getElementById("equipment").value;
+  const limitations = document.getElementById("limitations").value.trim();
+
+  if (!goal)          return showAlert("Please select your fitness goal.", "error");
+  if (!selectedLevel) return showAlert("Please select your fitness level.", "error");
+  if (!selectedDays)  return showAlert("Please select how many days per week.", "error");
+
+  // ── Show loading state ──
+  document.getElementById("emptyState").style.display   = "none";
+  document.getElementById("planOutput").classList.remove("show");
+  document.getElementById("loadingBox").classList.add("show");
+  document.getElementById("generateBtn").disabled = true;
+
+  // Simulate a short loading time — makes it feel like it's "thinking"
+  setTimeout(() => {
+    try {
+      const schedule  = buildSchedule(goal, selectedLevel, selectedDays, equipment);
+      const dayNames  = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+      const goalNames = {
+        weight_loss:"Lose Weight & Burn Fat", muscle_gain:"Build Muscle",
+        endurance:"Improve Endurance", maintenance:"Stay Fit", flexibility:"Increase Flexibility"
+      };
+      const levelNames = { beginner:"Beginner", intermediate:"Intermediate", advanced:"Advanced" };
+      const eqNames    = { none:"No Equipment", minimal:"Minimal Equipment", full:"Full Gym" };
+
+      // Build plan object
+      currentPlanData = {
+        goal, level: selectedLevel, days: selectedDays,
+        equipment, limitations,
+        goalLabel:  goalNames[goal],
+        levelLabel: levelNames[selectedLevel],
+        eqLabel:    eqNames[equipment],
+        schedule,
+        createdAt:  new Date().toISOString(),
+        planText:   "" // filled below for copy/save
+      };
+
+      // Render output
+      renderPlan(currentPlanData, schedule, dayNames);
+
+    } catch(err) {
+      showAlert("Something went wrong generating your plan.", "error");
+      document.getElementById("emptyState").style.display = "block";
+    } finally {
+      document.getElementById("loadingBox").classList.remove("show");
+      document.getElementById("generateBtn").disabled = false;
+    }
+  }, 1800); // 1.8 second "thinking" delay
+}
+
+// ════════════════════════════════════════════════════════════
+//  RENDER PLAN INTO THE UI
+// ════════════════════════════════════════════════════════════
+function renderPlan(data, schedule, dayNames) {
+  // ── Meta tags ──
+  document.getElementById("planMetaTags").innerHTML =
+    `<span class="plan-tag highlight">${data.goalLabel}</span>
+     <span class="plan-tag">${data.levelLabel}</span>
+     <span class="plan-tag">${data.days} days/week</span>
+     <span class="plan-tag">${data.eqLabel}</span>
+     ${data.limitations ? `<span class="plan-tag">⚠️ ${data.limitations}</span>` : ""}`;
+
+  let html       = "";
+  let plainText  = `FITTRACKR — PERSONALIZED WORKOUT PLAN\n`;
+  plainText     += `Goal: ${data.goalLabel} | Level: ${data.levelLabel} | ${data.days} days/week\n`;
+  plainText     += `Generated: ${new Date().toLocaleDateString()}\n\n`;
+
+  // ── Warmup card ──
+  const warmupKey = ["weight_loss","endurance","maintenance"].includes(data.goal) ? "general"
+                  : ["muscle_gain"].includes(data.goal) && schedule[0].includes("upper") ? "upper"
+                  : "lower";
+  html += `<div class="warmup-card">
+    <h4>🔥 WARM-UP (Do this before every session)</h4>
+    <ul>${WARMUP[warmupKey].map(w => `<li>${w}</li>`).join("")}</ul>
+  </div>`;
+  plainText += "WARM-UP (Do before every session):\n";
+  WARMUP[warmupKey].forEach(w => plainText += `  • ${w}\n`);
+  plainText += "\n";
+
+  // ── Day blocks ──
+  schedule.forEach((dayType, i) => {
+    const dayName = dayNames[i];
+
+    if (dayType === "rest") {
+      html += `<div class="rest-day-block">
+        <h3>💤 ${dayName.toUpperCase()} — REST DAY</h3>
+        <p>Active recovery — light walk, foam rolling, or stretching only</p>
+      </div>`;
+      plainText += `${dayName.toUpperCase()} — REST DAY\n  Active recovery only\n\n`;
+      return;
+    }
+
+    const exercises = getExercises(data.goal, data.level, data.equipment, dayType);
+    const typeLabel = dayType.replace(/_/g," ").replace(/\b\w/g, l => l.toUpperCase());
+
+    // Color for day type badge
+    const badgeColors = {
+      upper:"rgba(124,58,237,0.15);color:#a78bfa",
+      lower:"rgba(245,158,11,0.15);color:#fcd34d",
+      cardio:"rgba(239,68,68,0.15);color:#fca5a5",
+      push:"rgba(124,58,237,0.15);color:#a78bfa",
+      pull:"rgba(59,130,246,0.15);color:#93c5fd",
+      legs:"rgba(16,185,129,0.15);color:var(--accent2)",
+      full_body:"rgba(245,158,11,0.15);color:#fcd34d",
+      hiit:"rgba(239,68,68,0.15);color:#fca5a5",
+      stretch:"rgba(16,185,129,0.15);color:var(--accent2)",
+      yoga:"rgba(124,58,237,0.15);color:#a78bfa",
+      circuit:"rgba(239,68,68,0.15);color:#fca5a5",
+      shoulders:"rgba(59,130,246,0.15);color:#93c5fd",
+      chest_triceps:"rgba(124,58,237,0.15);color:#a78bfa",
+      back_biceps:"rgba(59,130,246,0.15);color:#93c5fd",
+      deep_stretch:"rgba(16,185,129,0.15);color:var(--accent2)",
+      strength:"rgba(245,158,11,0.15);color:#fcd34d"
+    };
+    const badgeStyle = badgeColors[dayType] || "rgba(124,58,237,0.15);color:#a78bfa";
+
+    html += `<div class="day-block">
+      <div class="day-header">
+        <h3>${dayName.toUpperCase()}</h3>
+        <span class="day-type-badge" style="background:${badgeStyle.split(";")[0].replace("background:","")}; color:${badgeStyle.split(";")[1].replace("color:","")};">
+          ${typeLabel}
+        </span>
+      </div>`;
+
+    if (exercises.length) {
+      html += `<table class="exercise-table">
+        <thead>
+          <tr>
+            <th>Exercise</th>
+            <th>Sets</th>
+            <th>Reps / Time</th>
+            <th>Rest</th>
+            <th>Muscle</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      plainText += `${dayName.toUpperCase()} — ${typeLabel}\n`;
+      exercises.forEach(ex => {
+        html += `<tr>
+          <td class="exercise-name">${ex.name}</td>
+          <td>${ex.sets}</td>
+          <td>${ex.reps}</td>
+          <td>${ex.rest}</td>
+          <td><span class="muscle-tag">${ex.muscle}</span></td>
+        </tr>`;
+        plainText += `  ${ex.name}: ${ex.sets} sets × ${ex.reps} | Rest: ${ex.rest}\n`;
+      });
+
+      html += `</tbody></table>`;
+      plainText += "\n";
+    } else {
+      html += `<p style="padding:16px;color:var(--muted);">Active recovery / light cardio</p>`;
+    }
+
+    html += `</div>`;
+  });
+
+  // ── Cooldown ──
+  html += `<div class="warmup-card" style="background:rgba(59,130,246,0.06);border-color:rgba(59,130,246,0.2);">
+    <h4 style="color:#93c5fd;">🧊 COOL-DOWN (Do this after every session)</h4>
+    <ul>${COOLDOWN.map(c => `<li>${c}</li>`).join("")}</ul>
+  </div>`;
+  plainText += "COOL-DOWN:\n";
+  COOLDOWN.forEach(c => plainText += `  • ${c}\n`);
+
+  // ── Expert tip ──
+  html += `<div class="tip-card">
+    <h4>💡 EXPERT TIP FOR YOUR GOAL</h4>
+    <p>${TIPS[data.goal]}</p>
+  </div>`;
+  plainText += `\nEXPERT TIP:\n${TIPS[data.goal]}\n`;
+
+  // ── Inject into DOM ──
+  document.getElementById("planContent").innerHTML = html;
+  currentPlanData.planText = plainText;
+
+  // ── Show output card ──
+  document.getElementById("planOutput").classList.add("show");
+  document.getElementById("planOutput").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
+// ════════════════════════════════════════════════════════════
+//  SAVE PLAN
+// ════════════════════════════════════════════════════════════
+async function savePlan() {
+  if (!currentPlanData) return;
+
+  // Save to localStorage for dashboard widget
+  localStorage.setItem("lastWorkoutPlan", JSON.stringify({
+    goal:      currentPlanData.goalLabel,
+    level:     currentPlanData.levelLabel,
+    days:      currentPlanData.days,
+    createdAt: currentPlanData.createdAt
+  }));
+
+  // Save to MySQL via server
+  try {
+    const res  = await fetch("http://localhost:3000/save-workout-plan", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username,
+        goal:  currentPlanData.goalLabel,
+        level: currentPlanData.levelLabel,
+        days:  currentPlanData.days,
+        plan:  currentPlanData.planText
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showAlert("Plan saved successfully! ✓", "success");
+      loadSavedPlans();
+    }
+  } catch {
+    // Server down — but localStorage save still worked
+    showAlert("Saved locally! (Server not reachable)", "info");
+  }
+}
+
+// ── Copy plan text to clipboard ──
+function copyPlan() {
+  if (!currentPlanData?.planText) return;
+  navigator.clipboard.writeText(currentPlanData.planText)
+    .then(() => showAlert("Plan copied to clipboard! 📋", "success"))
+    .catch(() => showAlert("Copy failed — try selecting text manually.", "error"));
+}
+
+// ── Reset for a new plan ──
+function resetForm() {
+  selectedLevel = "";
+  selectedDays  = 0;
+  currentPlanData = null;
+  document.getElementById("goal").value      = "";
+  document.getElementById("equipment").value = "none";
+  document.getElementById("limitations").value = "";
+  document.querySelectorAll(".level-card").forEach(c => c.classList.remove("active"));
+  document.querySelectorAll(".day-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("planOutput").classList.remove("show");
+  document.getElementById("emptyState").style.display = "block";
+  window.scrollTo({ top:0, behavior:"smooth" });
+}
+
+// ── Load saved plans from server ──
+async function loadSavedPlans() {
+  try {
+    const res  = await fetch(`http://localhost:3000/get-workout-plans?username=${username}`);
+    const data = await res.json();
+    if (!data.success || !data.plans.length) return;
+    const list = document.getElementById("savedPlansList");
+    list.innerHTML = data.plans.map(p => {
+      const date = new Date(p.created_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+      return `<div class="saved-plan-card" id="plan-${p.id}">
+        <div class="saved-plan-meta">
+          <span class="sp-title">${p.goal}</span>
+          <span class="saved-plan-date">${date}</span>
+        </div>
+        <div class="saved-plan-tags" style="margin-top:6px;">
+          <span class="plan-tag" style="font-size:.78rem;padding:3px 10px;">${p.level}</span>
+          <span class="plan-tag" style="font-size:.78rem;padding:3px 10px;">${p.days} days/week</span>
+        </div>
+        <button onclick="deletePlan(${p.id}, event)" style="margin-top:10px;width:100%;padding:7px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:8px;font-family:var(--font-body);font-size:.82rem;cursor:pointer;">
+          🗑️ Delete Plan
+        </button>
+      </div>`;
+    }).join("");
+  } catch {}
+}
+
+async function deletePlan(id, event) {
+  event.stopPropagation();
+  if (!confirm("Delete this saved plan?")) return;
+  try {
+    const res  = await fetch(`http://localhost:3000/delete-workout-plan?id=${id}&username=${username}`, { method: "DELETE" });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById(`plan-${id}`).remove();
+      const remaining = document.querySelectorAll(".saved-plan-card").length;
+      if (!remaining) document.getElementById("savedPlansList").innerHTML = `<p style="color:var(--muted);font-size:.88rem;text-align:center;padding:14px 0;">No saved plans yet.</p>`;
+      showAlert("Plan deleted.", "info");
+    }
+  } catch {
+    document.getElementById(`plan-${id}`).remove();
+    showAlert("Plan removed.", "info");
+  }
+}
+
+// ── Logout ──
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.setItem("isLoggedIn","false");
+  window.location.href = "index.html";
+});
+
+// ── Load saved plans on page init ──
+loadSavedPlans();
+</script>
+</body>
+</html>
