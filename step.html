@@ -6,6 +6,77 @@
   <title>FitTrackr — Steps</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ── Circular ring ── */
+    .step-hero { display:flex; gap:32px; align-items:center; flex-wrap:wrap; }
+
+    .ring-wrap { position:relative; width:200px; height:200px; flex-shrink:0; }
+    .ring-svg  { width:200px; height:200px; transform:rotate(-90deg); }
+    .ring-bg   { fill:none; stroke:rgba(245,158,11,.12); stroke-width:14; }
+    .ring-fill {
+      fill:none; stroke:url(#stepGradient); stroke-width:14;
+      stroke-linecap:round;
+      stroke-dasharray: 534;
+      stroke-dashoffset: 534;
+      transition: stroke-dashoffset 1.2s cubic-bezier(.34,1.1,.64,1);
+    }
+    .ring-center {
+      position:absolute; inset:0;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    .ring-steps {
+      font-family:var(--font-head); font-size:2rem; letter-spacing:2px;
+      color:var(--text); line-height:1;
+    }
+    .ring-label { font-size:.72rem; color:var(--muted); margin-top:4px; letter-spacing:1px; }
+    .ring-pct   { font-size:.9rem; color:#fcd34d; font-weight:700; margin-top:2px; }
+
+    /* ── Milestone strip ── */
+    .milestones {
+      display:flex; gap:0; flex:1; min-width:280px;
+      background:var(--surface2); border-radius:12px; overflow:hidden;
+    }
+    .milestone {
+      flex:1; padding:14px 10px; text-align:center;
+      border-right:1px solid var(--border); position:relative;
+      transition:background .2s;
+    }
+    .milestone:last-child { border-right:none; }
+    .milestone.reached { background:rgba(245,158,11,.08); }
+    .milestone-icon  { font-size:1.4rem; display:block; margin-bottom:4px; }
+    .milestone-steps { font-size:.72rem; color:var(--muted); }
+    .milestone-label { font-size:.65rem; color:var(--muted); margin-top:2px; }
+    .milestone.reached .milestone-steps { color:#fcd34d; font-weight:700; }
+    .milestone-check {
+      position:absolute; top:6px; right:8px;
+      font-size:.65rem; color:#10b981;
+      display:none;
+    }
+    .milestone.reached .milestone-check { display:block; }
+
+    /* ── Derived stat cards ── */
+    .derived-cards { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+    .derived-card {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius); padding:18px 14px; text-align:center;
+      position:relative; overflow:hidden; transition:transform .2s;
+    }
+    .derived-card:hover { transform:translateY(-3px); }
+    .derived-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+    .derived-card.green::before  { background:linear-gradient(90deg,#10b981,#6ee7b7); }
+    .derived-card.purple::before { background:linear-gradient(90deg,#7c3aed,#a78bfa); }
+    .derived-card.red::before    { background:linear-gradient(90deg,#ef4444,#fca5a5); }
+    .derived-val   { font-family:var(--font-head); font-size:1.6rem; letter-spacing:2px; }
+    .derived-label { font-size:.75rem; color:var(--muted); margin-top:4px; }
+
+    /* ── Motivational message ── */
+    .step-message {
+      display:flex; align-items:center; gap:12px;
+      background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.2);
+      border-radius:12px; padding:14px 18px; margin-bottom:20px;
+      color:#fcd34d; font-size:.9rem;
+    }
+  </style>
 </head>
 <body><script>
   var _s = JSON.parse(localStorage.getItem("appSettings") || "{}");
@@ -21,11 +92,12 @@
       <a class="nav-item active" href="step.html">  <span class="icon">👣</span> Steps</a>
       <a class="nav-item" href="calorie.html">      <span class="icon">🔥</span> Calories</a>
       <a class="nav-item" href="heart_rate.html">   <span class="icon">❤️</span> Heart Rate</a>
-   
-      <a class="nav-item" href="workout_planner.html"> <span class="icon">⚡</span> Smart Planner</a>
-      <a class="nav-item" href="food_scanner.html">   <span class="icon">🍎</span> Food Scanner</a>
-      <a class="nav-item" href="report.html">           <span class="icon">📊</span> Report Card</a>
-
+      <a class="nav-item" href="workout_planner.html"><span class="icon">⚡</span> Smart Planner</a>
+      <a class="nav-item" href="workout_log.html">         <span class="icon">🏋️</span> Workout Logger</a>
+      <a class="nav-item" href="body_metrics.html">        <span class="icon">📏</span> Body Metrics</a>
+      <a class="nav-item" href="food_scanner.html"> <span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item" href="report.html">       <span class="icon">📊</span> Report Card</a>
+      <a class="nav-item" href="challenges.html">   <span class="icon">🏆</span> Challenges</a>
       <a class="nav-item" href="settings.html">     <span class="icon">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-bottom">
@@ -36,58 +108,130 @@
   <main class="main-content">
     <div class="page-header">
       <h1>👣 STEP TRACKER</h1>
-      <p>Track your daily steps via Google Fit</p>
+      <p>Track your daily steps and stay active</p>
     </div>
 
     <div id="alertBox" class="alert"></div>
+    <div class="step-message">
+      <span style="font-size:1.4rem;" id="stepMsgIcon">👟</span>
+      <span id="stepMsgText">Sync from Google Fit to see your steps today!</span>
+    </div>
 
-    <!-- Stat cards -->
-    <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:24px;">
-      <div class="stat-card amber">
-        <div class="stat-icon">👣</div>
-        <div class="stat-value" id="stepCount">--</div>
-        <div class="stat-label">Steps today</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-icon">📏</div>
-        <div class="stat-value" id="distDisplay">--</div>
-        <div class="stat-label">Est. distance (km)</div>
-      </div>
-      <div class="stat-card purple">
-        <div class="stat-icon">🔥</div>
-        <div class="stat-value" id="stepCalDisplay">--</div>
-        <div class="stat-label">Calories from steps</div>
+    <!-- Hero: ring + milestones -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="step-hero">
+        <!-- Circular ring -->
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 180 180">
+            <defs>
+              <linearGradient id="stepGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="#fcd34d"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg"   cx="90" cy="90" r="85"/>
+            <circle class="ring-fill" cx="90" cy="90" r="85" id="stepRing"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-steps" id="stepCount">0</div>
+            <div class="ring-label">OF <span id="ringGoalLabel">10,000</span></div>
+            <div class="ring-pct"  id="stepPct">0%</div>
+          </div>
+        </div>
+
+        <!-- Milestones -->
+        <div style="flex:1;">
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;letter-spacing:1px;">MILESTONES</div>
+          <div class="milestones" id="milestonesStrip">
+            <div class="milestone" data-target="2000">
+              <span class="milestone-check">✓</span>
+              <span class="milestone-icon">🌱</span>
+              <div class="milestone-steps">2,000</div>
+              <div class="milestone-label">Warm Up</div>
+            </div>
+            <div class="milestone" data-target="5000">
+              <span class="milestone-check">✓</span>
+              <span class="milestone-icon">🚶</span>
+              <div class="milestone-steps">5,000</div>
+              <div class="milestone-label">Active</div>
+            </div>
+            <div class="milestone" data-target="7500">
+              <span class="milestone-check">✓</span>
+              <span class="milestone-icon">🏃</span>
+              <div class="milestone-steps">7,500</div>
+              <div class="milestone-label">Strong</div>
+            </div>
+            <div class="milestone" data-target="10000">
+              <span class="milestone-check">✓</span>
+              <span class="milestone-icon">🏆</span>
+              <div class="milestone-steps">10,000</div>
+              <div class="milestone-label">Goal!</div>
+            </div>
+            <div class="milestone" data-target="15000">
+              <span class="milestone-check">✓</span>
+              <span class="milestone-icon">⚡</span>
+              <div class="milestone-steps">15,000</div>
+              <div class="milestone-label">Elite</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="fetchStepsBtn" style="flex:1;">🔄 Sync from Google Fit</button>
+            <button class="btn btn-google"  id="googleLoginBtn">
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G"> Connect Google
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Progress -->
-    <div class="card" style="margin-bottom:24px;">
-      <div class="section-title">GOAL PROGRESS — 10,000 STEPS</div>
-      <div class="progress-wrap">
-        <div class="progress-label"><span>Steps</span><span id="stepProgressLabel">0 / 10,000</span></div>
-        <div class="progress-bar"><div class="progress-fill amber" id="stepProgressFill"></div></div>
+    <!-- Set Goal -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="section-title">SET STEP GOAL</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+        <input type="number" id="stepGoalInput" class="form-input" placeholder="e.g. 10000" min="500" style="flex:1;">
+        <button class="btn btn-warning" id="setStepGoalBtn">Set Goal</button>
       </div>
-      <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
-        <button class="btn btn-primary" id="fetchStepsBtn">🔄 Sync from Google Fit</button>
-        <button class="btn btn-google" id="googleLoginBtn">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G"> Connect Google
-        </button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="setStepGoalQuick(5000)">🚶 5,000</button>
+        <button class="btn btn-secondary" onclick="setStepGoalQuick(7500)">🏃 7,500</button>
+        <button class="btn btn-secondary" onclick="setStepGoalQuick(10000)">🏆 10,000</button>
+        <button class="btn btn-secondary" onclick="setStepGoalQuick(15000)">⚡ 15,000</button>
       </div>
     </div>
 
-    <!-- History + Chart -->
-    <div style="display:grid;grid-template-columns:1fr 2fr;gap:18px;">
+    <!-- Derived stats -->
+    <div class="derived-cards" style="margin-bottom:20px;">
+      <div class="derived-card green">
+        <div style="font-size:1.6rem;margin-bottom:6px;">📏</div>
+        <div class="derived-val" id="distDisplay">0.00</div>
+        <div class="derived-label">km walked</div>
+      </div>
+      <div class="derived-card purple">
+        <div style="font-size:1.6rem;margin-bottom:6px;">🔥</div>
+        <div class="derived-val" id="stepCalDisplay">0</div>
+        <div class="derived-label">kcal from steps</div>
+      </div>
+      <div class="derived-card red">
+        <div style="font-size:1.6rem;margin-bottom:6px;">⏱️</div>
+        <div class="derived-val" id="stepTimeDisplay">0</div>
+        <div class="derived-label">min active time</div>
+      </div>
+    </div>
+
+    <!-- Chart + History -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:18px;">
       <div class="card">
-        <div class="section-title">HISTORY</div>
+        <div class="section-title">STEP HISTORY</div>
+        <div class="chart-wrap">
+          <canvas id="stepChart" height="140"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">RECENT DAYS</div>
         <ul class="history-list" id="stepHistoryList">
           <li class="history-item" style="color:var(--muted);justify-content:center;">No data yet</li>
         </ul>
-      </div>
-      <div class="card">
-        <div class="section-title">STEP HISTORY CHART</div>
-        <div class="chart-wrap">
-          <canvas id="stepChart" height="150"></canvas>
-        </div>
       </div>
     </div>
   </main>
@@ -97,15 +241,33 @@
   if (localStorage.getItem("isLoggedIn") !== "true") window.location.href = "index.html";
 
   const alertBox = document.getElementById("alertBox");
-  function showAlert(msg, type = "info") {
+  function showAlert(msg, type="info") {
     alertBox.textContent = msg;
     alertBox.className = `alert alert-${type} show`;
     setTimeout(() => alertBox.classList.remove("show"), 4000);
   }
 
-  let accessToken  = localStorage.getItem("googleAccessToken");
-  let stepHistory  = JSON.parse(localStorage.getItem("stepHistory") || "[]");
-  let chartInst    = null;
+  const CIRCUMFERENCE = 2 * Math.PI * 85; // ~534
+  let accessToken = localStorage.getItem("googleAccessToken");
+  let stepHistory = JSON.parse(localStorage.getItem("stepHistory") || "[]");
+  let stepGoal = parseInt(localStorage.getItem("stepGoal")) || 10000;
+  let chartInst = null;
+
+  const stepMessages = [
+    { min:0,     icon:"🛋️", text:"No steps yet today. Time to get moving!" },
+    { min:1,     icon:"👟", text:"Great start! Every step counts." },
+    { min:2000,  icon:"🌱", text:"Warm-up done! Keep the momentum going." },
+    { min:5000,  icon:"💪", text:"Halfway there — you're on a roll!" },
+    { min:7500,  icon:"🏃", text:"Almost at 10K! Push through!" },
+    { min:10000, icon:"🏆", text:"Goal reached! You crushed it today!" },
+    // goal msg handled dynamically
+    { min:15000, icon:"⚡", text:"Elite mode unlocked — incredible!" },
+  ];
+
+  function getStepMsg(steps) {
+    const msgs = stepMessages.filter(m => steps >= m.min);
+    return msgs[msgs.length - 1];
+  }
 
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.has("access_token")) {
@@ -115,20 +277,40 @@
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 
-  // Restore saved
-  const savedSteps = localStorage.getItem("stepCount");
-  if (savedSteps) {
-    document.getElementById("stepCount").textContent = parseInt(savedSteps).toLocaleString();
-    updateDerivedStats(savedSteps);
-    updateProgress(savedSteps);
+  function updateRing(steps) {
+    const pct    = Math.min(steps / stepGoal, 1);
+    const offset = CIRCUMFERENCE * (1 - pct);
+    document.getElementById("stepRing").style.strokeDashoffset = offset;
+    document.getElementById("stepRing").style.strokeDasharray  = CIRCUMFERENCE;
+    document.getElementById("stepCount").textContent = parseInt(steps).toLocaleString();
+    document.getElementById("stepPct").textContent   = Math.round(pct * 100) + "%";
+    // Update goal labels
+    const gLabel = parseInt(stepGoal).toLocaleString();
+    const el1 = document.getElementById("ringGoalLabel");
+    const el2 = document.getElementById("goalProgressLabel");
+    if (el1) el1.textContent = gLabel;
+    if (el2) el2.textContent = gLabel;
+
+    // Milestones
+    document.querySelectorAll(".milestone").forEach(m => {
+      if (steps >= parseInt(m.dataset.target)) m.classList.add("reached");
+      else m.classList.remove("reached");
+    });
+
+    // Derived
+    document.getElementById("distDisplay").textContent    = (steps * 0.000762).toFixed(2);
+    document.getElementById("stepCalDisplay").textContent = Math.round(steps * 0.04);
+    document.getElementById("stepTimeDisplay").textContent= Math.round(steps / 100);
+
+    // Message
+    const msg = getStepMsg(steps);
+    document.getElementById("stepMsgIcon").textContent = msg.icon;
+    document.getElementById("stepMsgText").textContent = msg.text;
   }
-  renderChart();
-  renderHistory();
 
   document.getElementById("googleLoginBtn").addEventListener("click", () => {
     window.location.href = `http://localhost:3000/auth/google?state=${encodeURIComponent("step.html")}`;
   });
-
   document.getElementById("fetchStepsBtn").addEventListener("click", fetchSteps);
 
   async function fetchSteps() {
@@ -139,61 +321,50 @@
       if (!res.ok) throw new Error();
       const data = await res.json();
       const steps = data.steps;
-
-      document.getElementById("stepCount").textContent = parseInt(steps).toLocaleString();
       localStorage.setItem("stepCount", steps);
-
       stepHistory.push({ day: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}), steps });
       if (stepHistory.length > 14) stepHistory.shift();
       localStorage.setItem("stepHistory", JSON.stringify(stepHistory));
-
-      updateDerivedStats(steps);
-      updateProgress(steps);
+      updateRing(steps);
       renderChart();
       renderHistory();
-      showAlert("Steps synced!", "success");
+      showAlert("Steps synced! 👣", "success");
     } catch {
-      showAlert("Sync failed. Check server & Google token.", "error");
+      showAlert("Sync failed. Check server & token.", "error");
     }
-  }
-
-  function updateDerivedStats(steps) {
-    const dist = (steps * 0.000762).toFixed(2);
-    const cal  = Math.round(steps * 0.04);
-    document.getElementById("distDisplay").textContent    = dist + " km";
-    document.getElementById("stepCalDisplay").textContent = cal + " kcal";
-  }
-
-  function updateProgress(steps) {
-    const pct = Math.min(Math.round((steps / 10000) * 100), 100);
-    document.getElementById("stepProgressFill").style.width = pct + "%";
-    document.getElementById("stepProgressLabel").textContent = `${parseInt(steps).toLocaleString()} / 10,000`;
   }
 
   function renderChart() {
     const ctx = document.getElementById("stepChart").getContext("2d");
     if (chartInst) chartInst.destroy();
     chartInst = new Chart(ctx, {
-      type: "line",
-      data: {
+      type:"bar",
+      data:{
         labels: stepHistory.map(h => h.day),
-        datasets: [{
-          label: "Steps",
+        datasets:[{
+          label:"Steps",
           data: stepHistory.map(h => h.steps),
-          backgroundColor: "rgba(245,158,11,0.15)",
-          borderColor: "#f59e0b",
-          borderWidth: 2,
-          pointBackgroundColor: "#f59e0b",
-          fill: true,
-          tension: 0.35
+          backgroundColor:"rgba(245,158,11,0.25)",
+          borderColor:"#f59e0b",
+          borderWidth:2, borderRadius:6,
+          borderSkipped:false,
+        },{
+          label:"Goal",
+          data: stepHistory.map(() => stepGoal),
+          type:"line",
+          borderColor:"rgba(245,158,11,.4)",
+          borderDash:[5,5],
+          borderWidth:2,
+          pointRadius:0, fill:false,
         }]
       },
-      options: {
-        responsive: true,
-        plugins: { legend: { labels: { color: "#94a3b8" } } },
-        scales: {
-          x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.04)" } },
-          y: { beginAtZero: true, ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.06)" } }
+      options:{
+        responsive:true,
+        plugins:{ legend:{ labels:{ color:"#94a3b8" } } },
+        scales:{
+          x:{ ticks:{color:"#94a3b8"}, grid:{color:"rgba(255,255,255,0.04)"} },
+          y:{ beginAtZero:true, ticks:{color:"#94a3b8"}, grid:{color:"rgba(255,255,255,0.06)"},
+              suggestedMax:12000 }
         }
       }
     });
@@ -203,11 +374,33 @@
     const list = document.getElementById("stepHistoryList");
     if (!stepHistory.length) return;
     list.innerHTML = stepHistory.slice().reverse().map(h =>
-      `<li class="history-item"><span>${h.day}</span><span>${parseInt(h.steps).toLocaleString()} steps</span></li>`
+      `<li class="history-item"><span>${h.day}</span><span style="color:#fcd34d;font-weight:600;">${parseInt(h.steps).toLocaleString()} 👣</span></li>`
     ).join("");
   }
 
-  document.getElementById("logoutBtn").addEventListener("click", () => {
+  // Restore
+  const saved = localStorage.getItem("stepCount");
+  if (saved) { updateRing(parseInt(saved)); }
+  renderChart();
+  renderHistory();
+
+  function setStepGoalQuick(val) {
+    stepGoal = val;
+    localStorage.setItem("stepGoal", val);
+    const saved = parseInt(localStorage.getItem("stepCount")) || 0;
+    updateRing(saved);
+    renderChart();
+    showAlert("Step goal set to " + val.toLocaleString() + " steps!", "success");
+  }
+
+  document.getElementById("setStepGoalBtn").addEventListener("click", () => {
+    const val = parseInt(document.getElementById("stepGoalInput").value);
+    if (!val || val < 500) return showAlert("Enter a valid goal (min 500 steps).", "error");
+    setStepGoalQuick(val);
+    document.getElementById("stepGoalInput").value = "";
+  });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
     localStorage.setItem("isLoggedIn","false");
     window.location.href = "index.html";
   });
