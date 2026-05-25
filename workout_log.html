@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrackr — Workout Logger</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ── Category tabs ── */
+    .cat-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+    .cat-tab {
+      padding:8px 16px; border-radius:20px; font-size:.82rem; font-weight:600;
+      border:1px solid var(--border); background:var(--surface2); color:var(--muted);
+      cursor:pointer; transition:all .2s;
+    }
+    .cat-tab.active, .cat-tab:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+    /* ── Log form ── */
+    .log-form-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+    .log-form-grid .span2 { grid-column:span 2; }
+    .log-form-grid .span3 { grid-column:span 3; }
+
+    /* ── Exercise quick-pick ── */
+    .quick-pills { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+    .quick-pill {
+      padding:5px 12px; border-radius:16px; font-size:.78rem;
+      background:rgba(124,58,237,.08); border:1px solid rgba(124,58,237,.2);
+      color:#a78bfa; cursor:pointer; transition:all .2s;
+    }
+    .quick-pill:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+    /* ── Log entry card ── */
+    .log-entry {
+      display:flex; align-items:center; gap:14px;
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:14px; padding:14px 16px; margin-bottom:10px;
+      transition:transform .15s;
+    }
+    .log-entry:hover { transform:translateX(3px); }
+    .log-entry-icon {
+      width:42px; height:42px; border-radius:12px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:1.2rem;
+    }
+    .log-entry-body { flex:1; }
+    .log-entry-name  { font-weight:700; font-size:.95rem; }
+    .log-entry-stats { font-size:.78rem; color:var(--muted); margin-top:3px; }
+    .log-entry-time  { font-size:.72rem; color:var(--muted); white-space:nowrap; }
+    .log-entry-del {
+      background:none; border:none; color:rgba(239,68,68,.5); cursor:pointer;
+      font-size:1.1rem; padding:4px 8px; border-radius:8px; transition:all .2s;
+    }
+    .log-entry-del:hover { background:rgba(239,68,68,.1); color:#ef4444; }
+
+    /* ── Category badge ── */
+    .cat-badge {
+      font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:10px;
+      display:inline-block; margin-top:3px;
+    }
+    .cat-Chest    { background:rgba(239,68,68,.15);  color:#fca5a5; }
+    .cat-Back     { background:rgba(59,130,246,.15); color:#93c5fd; }
+    .cat-Legs     { background:rgba(16,185,129,.15); color:#6ee7b7; }
+    .cat-Shoulders{ background:rgba(245,158,11,.15); color:#fcd34d; }
+    .cat-Arms     { background:rgba(124,58,237,.15); color:#a78bfa; }
+    .cat-Core     { background:rgba(249,115,22,.15); color:#fdba74; }
+    .cat-Cardio   { background:rgba(236,72,153,.15); color:#f9a8d4; }
+    .cat-Other    { background:rgba(148,163,184,.15);color:#94a3b8; }
+
+    /* ── Summary bar ── */
+    .summary-bar {
+      display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px;
+    }
+    .sum-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:14px;
+      padding:16px; text-align:center; position:relative; overflow:hidden;
+    }
+    .sum-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+    .sum-card.purple::before { background:linear-gradient(90deg,#7c3aed,#a78bfa); }
+    .sum-card.blue::before   { background:linear-gradient(90deg,#3b82f6,#93c5fd); }
+    .sum-card.green::before  { background:linear-gradient(90deg,#10b981,#6ee7b7); }
+    .sum-card.amber::before  { background:linear-gradient(90deg,#f59e0b,#fcd34d); }
+    .sum-val   { font-family:var(--font-head); font-size:1.6rem; letter-spacing:2px; }
+    .sum-label { font-size:.72rem; color:var(--muted); margin-top:3px; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align:center; padding:48px 20px; color:var(--muted);
+    }
+    .empty-state .empty-icon { font-size:3rem; margin-bottom:12px; }
+  </style>
+</head>
+<body><script>
+  var _s = JSON.parse(localStorage.getItem("appSettings") || "{}");
+  if (_s.darkMode === false) document.body.classList.add("light-mode");
+</script>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">FIT<span>TRACKR</span></div>
+    <nav>
+      <a class="nav-item" href="dashboard.html">          <span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="profile.html">            <span class="icon">👤</span> Profile</a>
+      <a class="nav-item" href="water_intake.html">       <span class="icon">💧</span> Water Intake</a>
+      <a class="nav-item" href="step.html">               <span class="icon">👣</span> Steps</a>
+      <a class="nav-item" href="calorie.html">            <span class="icon">🔥</span> Calories</a>
+      <a class="nav-item" href="heart_rate.html">         <span class="icon">❤️</span> Heart Points</a>
+      <a class="nav-item" href="workout_planner.html">    <span class="icon">⚡</span> Smart Planner</a>
+      <a class="nav-item active" href="workout_log.html"> <span class="icon">🏋️</span> Workout Logger</a>
+      <a class="nav-item" href="food_scanner.html">       <span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item" href="report.html">             <span class="icon">📊</span> Report Card</a>
+      <a class="nav-item" href="challenges.html">         <span class="icon">🏆</span> Challenges</a>
+      <a class="nav-item" href="settings.html">           <span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-logout" id="logoutBtn">⎋ Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>🏋️ WORKOUT LOGGER</h1>
+      <p>Log your actual workouts — sets, reps, weight, duration</p>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <!-- Summary bar -->
+    <div class="summary-bar">
+      <div class="sum-card purple">
+        <div class="sum-val" id="totalSessions">0</div>
+        <div class="sum-label">💪 Sessions logged</div>
+      </div>
+      <div class="sum-card blue">
+        <div class="sum-val" id="totalSets">0</div>
+        <div class="sum-label">🔁 Total sets</div>
+      </div>
+      <div class="sum-card green">
+        <div class="sum-val" id="totalReps">0</div>
+        <div class="sum-label">⚡ Total reps</div>
+      </div>
+      <div class="sum-card amber">
+        <div class="sum-val" id="totalVolume">0</div>
+        <div class="sum-label">🏋️ Volume (kg)</div>
+      </div>
+    </div>
+
+    <!-- Log form -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="section-title">LOG A WORKOUT</div>
+
+      <!-- Category tabs -->
+      <div class="cat-tabs" id="catTabs">
+        <div class="cat-tab active" data-cat="Chest">🫁 Chest</div>
+        <div class="cat-tab" data-cat="Back">🔙 Back</div>
+        <div class="cat-tab" data-cat="Legs">🦵 Legs</div>
+        <div class="cat-tab" data-cat="Shoulders">🏋️ Shoulders</div>
+        <div class="cat-tab" data-cat="Arms">💪 Arms</div>
+        <div class="cat-tab" data-cat="Core">🔥 Core</div>
+        <div class="cat-tab" data-cat="Cardio">🏃 Cardio</div>
+        <div class="cat-tab" data-cat="Other">➕ Other</div>
+      </div>
+
+      <!-- Quick-pick exercises -->
+      <div class="quick-pills" id="quickPills"></div>
+
+      <!-- Input grid -->
+      <div class="log-form-grid">
+        <div class="span2 form-group" style="margin:0;">
+          <input type="text" id="exerciseName" class="form-input" placeholder="Exercise name (e.g. Bench Press)">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <input type="number" id="weightKg" class="form-input" placeholder="Weight (kg)" min="0" step="0.5">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <input type="number" id="setsInput" class="form-input" placeholder="Sets" min="0">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <input type="number" id="repsInput" class="form-input" placeholder="Reps" min="0">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <input type="number" id="durationInput" class="form-input" placeholder="Duration (min)" min="0">
+        </div>
+        <div class="span3 form-group" style="margin:0;">
+          <input type="text" id="notesInput" class="form-input" placeholder="Notes (optional — e.g. 'felt strong today')">
+        </div>
+        <div class="span3" style="margin-top:4px;">
+          <button class="btn btn-primary" id="logBtn" style="width:100%;padding:14px;">
+            ➕ Log This Exercise
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly volume chart -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="section-title">WEEKLY VOLUME (kg lifted)</div>
+      <div class="chart-wrap">
+        <canvas id="volumeChart" height="100"></canvas>
+      </div>
+    </div>
+
+    <!-- Log history -->
+    <div class="card">
+      <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>RECENT WORKOUT LOG</span>
+        <button class="btn btn-secondary" id="refreshBtn" style="padding:6px 14px;font-size:.8rem;">🔄 Refresh</button>
+      </div>
+      <div id="logList"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  if (localStorage.getItem("isLoggedIn") !== "true") window.location.href = "index.html";
+  const username = localStorage.getItem("username") || "";
+
+  const alertBox = document.getElementById("alertBox");
+  function showAlert(msg, type="info") {
+    alertBox.textContent = msg;
+    alertBox.className = `alert alert-${type} show`;
+    setTimeout(() => alertBox.classList.remove("show"), 4000);
+  }
+
+  // Exercise quick-picks per category
+  const exercises = {
+    Chest:     ["Bench Press","Incline Press","Decline Press","Chest Fly","Push-Up","Cable Crossover"],
+    Back:      ["Pull-Up","Deadlift","Bent-over Row","Lat Pulldown","Seated Row","Face Pull"],
+    Legs:      ["Squat","Leg Press","Lunges","Leg Curl","Leg Extension","Calf Raise","Romanian DL"],
+    Shoulders: ["Overhead Press","Lateral Raise","Front Raise","Arnold Press","Shrugs","Rear Delt Fly"],
+    Arms:      ["Bicep Curl","Hammer Curl","Tricep Dips","Skull Crusher","Preacher Curl","Cable Curl"],
+    Core:      ["Plank","Crunches","Leg Raise","Russian Twist","Cable Crunch","Ab Wheel"],
+    Cardio:    ["Running","Cycling","Jump Rope","HIIT","Swimming","Rowing","Elliptical"],
+    Other:     ["Yoga","Stretching","Mobility Work","Sport","Custom"]
+  };
+
+  const catIcons = { Chest:"🫁", Back:"🔙", Legs:"🦵", Shoulders:"🏋️", Arms:"💪", Core:"🔥", Cardio:"🏃", Other:"➕" };
+
+  let activeCategory = "Chest";
+  let allLogs = [];
+
+  // Render quick pills
+  function renderPills(cat) {
+    const wrap = document.getElementById("quickPills");
+    wrap.innerHTML = exercises[cat].map(e =>
+      `<div class="quick-pill" onclick="pickExercise('${e}')">${e}</div>`
+    ).join('');
+  }
+
+  function pickExercise(name) {
+    document.getElementById("exerciseName").value = name;
+    document.getElementById("setsInput").focus();
+  }
+
+  // Category tab switching
+  document.getElementById("catTabs").addEventListener("click", e => {
+    const tab = e.target.closest(".cat-tab");
+    if (!tab) return;
+    document.querySelectorAll(".cat-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    activeCategory = tab.dataset.cat;
+    renderPills(activeCategory);
+  });
+
+  renderPills("Chest");
+
+  // Log exercise
+  document.getElementById("logBtn").addEventListener("click", async () => {
+    const exercise = document.getElementById("exerciseName").value.trim();
+    if (!exercise) return showAlert("Enter an exercise name.", "error");
+
+    const payload = {
+      username,
+      exercise,
+      category: activeCategory,
+      sets:      parseInt(document.getElementById("setsInput").value)    || 0,
+      reps:      parseInt(document.getElementById("repsInput").value)    || 0,
+      weight_kg: parseFloat(document.getElementById("weightKg").value)  || 0,
+      duration:  parseInt(document.getElementById("durationInput").value)|| 0,
+      notes:     document.getElementById("notesInput").value.trim()
+    };
+
+    try {
+      const res  = await fetch("http://localhost:3000/save-workout-log", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showAlert(`${exercise} logged! 💪`, "success");
+        // Clear inputs
+        ["exerciseName","setsInput","repsInput","weightKg","durationInput","notesInput"]
+          .forEach(id => document.getElementById(id).value = "");
+        loadLogs();
+      } else {
+        showAlert(data.message || "Failed to log.", "error");
+      }
+    } catch { showAlert("Server error. Is it running?", "error"); }
+  });
+
+  // Load logs
+  async function loadLogs() {
+    try {
+      const res  = await fetch(`http://localhost:3000/get-workout-logs?username=${encodeURIComponent(username)}`);
+      const data = await res.json();
+      if (data.success) {
+        allLogs = data.logs;
+        renderLogs(allLogs);
+        updateSummary(allLogs);
+        renderVolumeChart(allLogs);
+      }
+    } catch { renderLogs([]); }
+  }
+
+  function updateSummary(logs) {
+    const sessions = new Set(logs.map(l => l.logged_at?.slice(0,10))).size;
+    const sets     = logs.reduce((s,l) => s + (l.sets||0), 0);
+    const reps     = logs.reduce((s,l) => s + (l.reps||0), 0);
+    const vol      = logs.reduce((s,l) => s + ((l.sets||0)*(l.reps||0)*(l.weight_kg||0)), 0);
+    document.getElementById("totalSessions").textContent = sessions;
+    document.getElementById("totalSets").textContent     = sets;
+    document.getElementById("totalReps").textContent     = reps;
+    document.getElementById("totalVolume").textContent   = Math.round(vol).toLocaleString();
+  }
+
+  function renderLogs(logs) {
+    const list = document.getElementById("logList");
+    if (!logs.length) {
+      list.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">🏋️</div>
+        <div>No workouts logged yet.</div>
+        <div style="font-size:.85rem;margin-top:6px;">Log your first exercise above!</div>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = logs.map(l => {
+      const stats = [];
+      if (l.sets)      stats.push(`${l.sets} sets`);
+      if (l.reps)      stats.push(`${l.reps} reps`);
+      if (l.weight_kg) stats.push(`${l.weight_kg} kg`);
+      if (l.duration)  stats.push(`${l.duration} min`);
+      const time = new Date(l.logged_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      return `<div class="log-entry">
+        <div class="log-entry-icon" style="background:rgba(124,58,237,.12)">${catIcons[l.category]||'💪'}</div>
+        <div class="log-entry-body">
+          <div class="log-entry-name">${l.exercise}</div>
+          <div class="log-entry-stats">${stats.join(' · ') || 'No stats recorded'}${l.notes ? ` — <em>${l.notes}</em>` : ''}</div>
+          <span class="cat-badge cat-${l.category}">${l.category}</span>
+        </div>
+        <div class="log-entry-time">${time}</div>
+        <button class="log-entry-del" onclick="deleteLog(${l.id})" title="Delete">🗑️</button>
+      </div>`;
+    }).join('');
+  }
+
+  async function deleteLog(id) {
+    if (!confirm("Delete this log entry?")) return;
+    try {
+      const res  = await fetch(`http://localhost:3000/delete-workout-log?id=${id}&username=${encodeURIComponent(username)}`, { method:"DELETE" });
+      const data = await res.json();
+      if (data.success) { showAlert("Deleted.", "info"); loadLogs(); }
+    } catch { showAlert("Delete failed.", "error"); }
+  }
+
+  let chartInst = null;
+  function renderVolumeChart(logs) {
+    // Group volume by day (last 7 days)
+    const days = {};
+    for (let i=6; i>=0; i--) {
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const key = d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      days[key] = 0;
+    }
+    logs.forEach(l => {
+      const key = new Date(l.logged_at).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      if (key in days) days[key] += (l.sets||0)*(l.reps||0)*(l.weight_kg||0);
+    });
+
+    const ctx = document.getElementById("volumeChart").getContext("2d");
+    if (chartInst) chartInst.destroy();
+    chartInst = new Chart(ctx, {
+      type:"bar",
+      data:{
+        labels: Object.keys(days),
+        datasets:[{
+          label:"Volume (kg)",
+          data: Object.values(days).map(v => Math.round(v)),
+          backgroundColor:"rgba(124,58,237,0.3)",
+          borderColor:"#7c3aed",
+          borderWidth:2, borderRadius:8, borderSkipped:false,
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{ legend:{ labels:{ color:"#94a3b8" } } },
+        scales:{
+          x:{ ticks:{color:"#94a3b8"}, grid:{color:"rgba(255,255,255,0.04)"} },
+          y:{ beginAtZero:true, ticks:{color:"#94a3b8"}, grid:{color:"rgba(255,255,255,0.06)"} }
+        }
+      }
+    });
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", loadLogs);
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.setItem("isLoggedIn","false");
+    window.location.href = "index.html";
+  });
+
+  // Init
+  loadLogs();
+</script>
+</body>
+</html>
