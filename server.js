@@ -15,6 +15,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ── Serve HTML files from same folder ────────────────────────
+// Allows opening pages at http://localhost:3000/dashboard.html
+// so OAuth redirects land on same port — no Live Server conflict
+app.use(express.static(__dirname));
+
 // ── Database ────────────────────────────────────────────────
 const db = mysql.createConnection({
   host:     process.env.DB_HOST,
@@ -31,7 +36,7 @@ db.connect(err => {
 
 function createTables() {
   const queries = [
-    // Users table — stores login credentials
+    // Users table
     `CREATE TABLE IF NOT EXISTS users (
       id         INT AUTO_INCREMENT PRIMARY KEY,
       name       VARCHAR(100) NOT NULL,
@@ -40,17 +45,19 @@ function createTables() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
-    // Profiles table — stores personal info
+    // Profiles table (with height/weight)
     `CREATE TABLE IF NOT EXISTS profiles (
       username   VARCHAR(100) PRIMARY KEY,
       name       VARCHAR(100),
       age        INT,
       gender     VARCHAR(20),
       phone      VARCHAR(20),
+      height_cm  DECIMAL(5,2),
+      weight_kg  DECIMAL(5,2),
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`,
 
-    // Water intake table — stores hydration data
+    // Water intake table
     `CREATE TABLE IF NOT EXISTS water_intake (
       username   VARCHAR(100) PRIMARY KEY,
       totalWater INT DEFAULT 0,
@@ -59,7 +66,7 @@ function createTables() {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`,
 
-    // Workout plans table — stores generated workout plans
+    // Workout plans table
     `CREATE TABLE IF NOT EXISTS workout_plans (
       id         INT AUTO_INCREMENT PRIMARY KEY,
       username   VARCHAR(100) NOT NULL,
@@ -68,6 +75,31 @@ function createTables() {
       days       INT,
       plan       LONGTEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    // Workout logs table
+    `CREATE TABLE IF NOT EXISTS workout_logs (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      username   VARCHAR(100) NOT NULL,
+      exercise   VARCHAR(150) NOT NULL,
+      category   VARCHAR(50),
+      sets       INT DEFAULT 0,
+      reps       INT DEFAULT 0,
+      weight_kg  DECIMAL(6,2) DEFAULT 0,
+      duration   INT DEFAULT 0,
+      notes      VARCHAR(255),
+      logged_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    // Body metrics history
+    `CREATE TABLE IF NOT EXISTS body_metrics (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      username   VARCHAR(100) NOT NULL,
+      weight_kg  DECIMAL(5,2),
+      height_cm  DECIMAL(5,2),
+      bmi        DECIMAL(4,2),
+      body_fat   DECIMAL(4,2),
+      logged_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
   ];
 
@@ -108,7 +140,7 @@ app.get('/auth/google', (req, res) => {
 app.get('/oauth2callback', async (req, res) => {
   const code         = req.query.code;
   const redirectPage = decodeURIComponent(req.query.state || 'dashboard.html');
-  const frontendUrl  = process.env.FRONTEND_URL || 'http://localhost:5500';
+  const frontendUrl  = 'http://localhost:3000'; // always same port as server
   try {
     const { tokens } = await oAuth2Client.getToken(code);
     oAuth2Client.setCredentials(tokens);
@@ -180,16 +212,17 @@ app.post('/login', (req, res) => {
 
 // ── Profile ─────────────────────────────────────────────────
 app.post('/save-profile', (req, res) => {
-  const { username, name, age, gender, phone } = req.body;
+  const { username, name, age, gender, phone, height_cm, weight_kg } = req.body;
   if (!username) return res.status(400).json({ success: false, message: 'Username required' });
 
   db.query(
-    `INSERT INTO profiles (username, name, age, gender, phone)
-     VALUES (?, ?, ?, ?, ?)
+    `INSERT INTO profiles (username, name, age, gender, phone, height_cm, weight_kg)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
        name=VALUES(name), age=VALUES(age),
-       gender=VALUES(gender), phone=VALUES(phone)`,
-    [username, name, age, gender, phone],
+       gender=VALUES(gender), phone=VALUES(phone),
+       height_cm=VALUES(height_cm), weight_kg=VALUES(weight_kg)`,
+    [username, name, age, gender, phone, height_cm||null, weight_kg||null],
     (err) => {
       if (err) {
         console.error('Profile save error:', err.message);
@@ -351,8 +384,11 @@ app.get('/api/calories', async (req, res) => {
   }
 });
 
-// ── Google Fit — Heart Rate ─────────────────────────────────
-app.get('/api/heart_rate', async (req, res) => {
+// ── Google Fit — Heart Points ───────────────────────────────
+// Google Fit tracks Heart Points (not raw BPM) for most users
+// 1 Heart Point = 1 min moderate activity, 2 pts = 1 min vigorous
+// WHO recommends 150 Heart Points/week (~22/day)
+app.get('/api/heart_points', async (req, res) => {
   const { access_token } = req.query;
   if (!access_token) return res.status(401).json({ error: 'Access token required' });
 
@@ -360,33 +396,56 @@ app.get('/api/heart_rate', async (req, res) => {
   const startTimeMillis = endTimeMillis - 86400000;
 
   try {
-    const response = await axios.post(
+    // Today's heart points
+    const todayRes = await axios.post(
       'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate',
       {
-        aggregateBy: [{ dataTypeName: 'com.google.heart_rate.bpm' }],
-        bucketByTime: { durationMillis: 3600000 }, // 1-hour buckets
-        startTimeMillis, endTimeMillis
+        aggregateBy: [{ dataTypeName: 'com.google.heart_minutes' }],
+        bucketByTime: { durationMillis: 86400000 },
+        startTimeMillis,
+        endTimeMillis
       },
       { headers: { Authorization: `Bearer ${access_token}` } }
     );
 
-    const heartRates = [];
-    for (const bucket of (response.data.bucket || [])) {
-      const points = bucket.dataset?.[0]?.point || [];
-      if (points.length) {
-        const avg  = points.reduce((s, p) => s + p.value[0].fpVal, 0) / points.length;
-        const time = new Date(parseInt(bucket.startTimeMillis))
-                       .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        heartRates.push({ time, bpm: parseFloat(avg.toFixed(1)) });
-      }
-    }
-    res.json({ heartRates });
+    // Last 7 days for weekly chart
+    const weekRes = await axios.post(
+      'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate',
+      {
+        aggregateBy: [{ dataTypeName: 'com.google.heart_minutes' }],
+        bucketByTime: { durationMillis: 86400000 },
+        startTimeMillis: endTimeMillis - (7 * 86400000),
+        endTimeMillis
+      },
+      { headers: { Authorization: `Bearer ${access_token}` } }
+    );
+
+    const todayPoints = todayRes.data.bucket?.[0]?.dataset?.[0]?.point
+      ?.reduce((sum, p) => sum + (p.value?.[0]?.fpVal || 0), 0) || 0;
+
+    const weeklyHistory = (weekRes.data.bucket || []).map(bucket => {
+      const pts = bucket.dataset?.[0]?.point
+        ?.reduce((sum, p) => sum + (p.value?.[0]?.fpVal || 0), 0) || 0;
+      const day = new Date(parseInt(bucket.startTimeMillis))
+        .toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      return { day, points: Math.round(pts) };
+    });
+
+    const weekTotal = weeklyHistory.reduce((s, d) => s + d.points, 0);
+
+    res.json({
+      today:         Math.round(todayPoints),
+      weekTotal,
+      weeklyHistory,
+      whoGoalDaily:  22,
+      whoGoalWeekly: 150
+    });
+
   } catch (err) {
-    console.error('Heart rate API error:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to fetch heart rate' });
+    console.error('Heart Points API error:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch Heart Points' });
   }
 });
-
 
 // ── Nutrition API ─────────────────────────────────────────
 // Proxies USDA FoodData Central — keeps API key hidden from browser
@@ -496,6 +555,76 @@ app.get('/api/nutrition', async (req, res) => {
     console.error('Nutrition API error:', err.message);
     res.status(500).json({ success: false, error: 'Failed to fetch nutrition data' });
   }
+});
+
+
+// ── Workout Logger — Save ───────────────────────────────────
+app.post('/save-workout-log', (req, res) => {
+  const { username, exercise, category, sets, reps, weight_kg, duration, notes } = req.body;
+  if (!username || !exercise) return res.status(400).json({ success: false, message: 'Missing fields' });
+  db.query(
+    'INSERT INTO workout_logs (username, exercise, category, sets, reps, weight_kg, duration, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [username, exercise, category||'Other', sets||0, reps||0, weight_kg||0, duration||0, notes||''],
+    (err) => {
+      if (err) { console.error('Workout log error:', err.message); return res.status(500).json({ success: false }); }
+      res.json({ success: true, message: 'Workout logged!' });
+    }
+  );
+});
+
+// ── Workout Logger — Get ─────────────────────────────────────
+app.get('/get-workout-logs', (req, res) => {
+  const { username } = req.query;
+  if (!username) return res.status(400).json({ success: false });
+  db.query(
+    'SELECT * FROM workout_logs WHERE username = ? ORDER BY logged_at DESC LIMIT 30',
+    [username],
+    (err, results) => {
+      if (err) return res.status(500).json({ success: false });
+      res.json({ success: true, logs: results });
+    }
+  );
+});
+
+// ── Workout Logger — Delete ──────────────────────────────────
+app.delete('/delete-workout-log', (req, res) => {
+  const { id, username } = req.query;
+  if (!id || !username) return res.status(400).json({ success: false });
+  db.query('DELETE FROM workout_logs WHERE id = ? AND username = ?', [id, username], (err, r) => {
+    if (err) return res.status(500).json({ success: false });
+    res.json({ success: true, deleted: r.affectedRows > 0 });
+  });
+});
+
+// ── Body Metrics — Save ──────────────────────────────────────
+app.post('/save-body-metrics', (req, res) => {
+  const { username, weight_kg, height_cm, body_fat } = req.body;
+  if (!username || !weight_kg) return res.status(400).json({ success: false, message: 'Missing fields' });
+  const h   = parseFloat(height_cm) || null;
+  const w   = parseFloat(weight_kg);
+  const bmi = h ? parseFloat((w / ((h/100)**2)).toFixed(1)) : null;
+  db.query(
+    'INSERT INTO body_metrics (username, weight_kg, height_cm, bmi, body_fat) VALUES (?, ?, ?, ?, ?)',
+    [username, w, h, bmi, body_fat||null],
+    (err) => {
+      if (err) { console.error('Body metrics error:', err.message); return res.status(500).json({ success: false }); }
+      res.json({ success: true, bmi, message: 'Metrics saved!' });
+    }
+  );
+});
+
+// ── Body Metrics — Get history ───────────────────────────────
+app.get('/get-body-metrics', (req, res) => {
+  const { username } = req.query;
+  if (!username) return res.status(400).json({ success: false });
+  db.query(
+    'SELECT * FROM body_metrics WHERE username = ? ORDER BY logged_at ASC LIMIT 60',
+    [username],
+    (err, results) => {
+      if (err) return res.status(500).json({ success: false });
+      res.json({ success: true, metrics: results });
+    }
+  );
 });
 
 // ── Start Server ────────────────────────────────────────────
