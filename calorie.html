@@ -6,6 +6,69 @@
   <title>FitTrackr — Calories</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .cal-hero { display:flex; gap:32px; align-items:center; flex-wrap:wrap; }
+
+    /* ── Donut ring ── */
+    .donut-wrap { position:relative; width:200px; height:200px; flex-shrink:0; }
+    .donut-svg  { width:200px; height:200px; transform:rotate(-90deg); }
+    .donut-bg   { fill:none; stroke:rgba(124,58,237,.12); stroke-width:22; }
+    .donut-fill {
+      fill:none; stroke:url(#calGradient); stroke-width:22;
+      stroke-linecap:round;
+      stroke-dasharray:534; stroke-dashoffset:534;
+      transition:stroke-dashoffset 1.2s cubic-bezier(.34,1.1,.64,1);
+    }
+    .donut-center {
+      position:absolute; inset:0;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    .donut-val   { font-family:var(--font-head); font-size:2rem; letter-spacing:2px; line-height:1; }
+    .donut-unit  { font-size:.72rem; color:var(--muted); letter-spacing:1px; margin-top:2px; }
+    .donut-pct   { font-size:.9rem; color:#a78bfa; font-weight:700; margin-top:4px; }
+
+    /* ── Flame pulse ── */
+    .flame-icon { font-size:2rem; animation:flame-pulse 1.5s ease-in-out infinite; display:inline-block; }
+    @keyframes flame-pulse {
+      0%,100% { transform:scale(1); filter:drop-shadow(0 0 4px rgba(245,158,11,.4)); }
+      50%      { transform:scale(1.2); filter:drop-shadow(0 0 12px rgba(245,158,11,.9)); }
+    }
+
+    /* ── Stat pills ── */
+    .stat-pills { display:grid; grid-template-columns:1fr 1fr; gap:12px; flex:1; }
+    .stat-pill {
+      background:var(--surface2); border-radius:14px; padding:16px;
+      border:1px solid var(--border); position:relative; overflow:hidden;
+      transition:transform .2s;
+    }
+    .stat-pill:hover { transform:translateY(-2px); }
+    .stat-pill::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:4px 0 0 4px; }
+    .stat-pill.purple::before { background:linear-gradient(180deg,#7c3aed,#a78bfa); }
+    .stat-pill.amber::before  { background:linear-gradient(180deg,#f59e0b,#fcd34d); }
+    .stat-pill.green::before  { background:linear-gradient(180deg,#10b981,#6ee7b7); }
+    .stat-pill.red::before    { background:linear-gradient(180deg,#ef4444,#fca5a5); }
+    .pill-val   { font-family:var(--font-head); font-size:1.5rem; letter-spacing:2px; }
+    .pill-label { font-size:.75rem; color:var(--muted); margin-top:2px; }
+
+    /* ── Zone bar ── */
+    .zone-strip {
+      display:flex; border-radius:10px; overflow:hidden;
+      height:10px; margin-top:8px;
+    }
+    .zone-seg { flex:1; transition:flex .5s; }
+
+    /* ── Goal input row ── */
+    .goal-row { display:flex; gap:10px; align-items:center; }
+    .goal-row .form-input { flex:1; }
+
+    /* ── Calorie message ── */
+    .cal-message {
+      display:flex; align-items:center; gap:12px;
+      background:rgba(124,58,237,.07); border:1px solid rgba(124,58,237,.2);
+      border-radius:12px; padding:14px 18px; margin-bottom:20px;
+      color:#a78bfa; font-size:.9rem;
+    }
+  </style>
 </head>
 <body><script>
   var _s = JSON.parse(localStorage.getItem("appSettings") || "{}");
@@ -15,17 +78,19 @@
   <aside class="sidebar">
     <div class="sidebar-logo">FIT<span>TRACKR</span></div>
     <nav>
-      <a class="nav-item" href="dashboard.html">    <span class="icon">🏠</span> Dashboard</a>
-      <a class="nav-item" href="profile.html">      <span class="icon">👤</span> Profile</a>
-      <a class="nav-item" href="water_intake.html"> <span class="icon">💧</span> Water Intake</a>
-      <a class="nav-item" href="step.html">         <span class="icon">👣</span> Steps</a>
-      <a class="nav-item active" href="calorie.html"><span class="icon">🔥</span> Calories</a>
-      <a class="nav-item" href="heart_rate.html">   <span class="icon">❤️</span> Heart Rate</a>
-    
-      <a class="nav-item" href="workout_planner.html"> <span class="icon">⚡</span> Smart Planner</a>
-       <a class="nav-item" href="food_scanner.html">   <span class="icon">🍎</span> Food Scanner</a>
-      <a class="nav-item" href="report.html">           <span class="icon">📊</span> Report Card</a>
-      <a class="nav-item" href="settings.html">     <span class="icon">⚙️</span> Settings</a>
+      <a class="nav-item" href="dashboard.html">         <span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="profile.html">           <span class="icon">👤</span> Profile</a>
+      <a class="nav-item" href="water_intake.html">      <span class="icon">💧</span> Water Intake</a>
+      <a class="nav-item" href="step.html">              <span class="icon">👣</span> Steps</a>
+      <a class="nav-item active" href="calorie.html">    <span class="icon">🔥</span> Calories</a>
+      <a class="nav-item" href="heart_rate.html">        <span class="icon">❤️</span> Heart Rate</a>
+      <a class="nav-item" href="workout_planner.html">   <span class="icon">⚡</span> Smart Planner</a>
+      <a class="nav-item" href="workout_log.html">        <span class="icon">🏋️</span> Workout Logger</a>
+      <a class="nav-item" href="body_metrics.html">       <span class="icon">📏</span> Body Metrics</a>
+      <a class="nav-item" href="food_scanner.html">      <span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item" href="report.html">            <span class="icon">📊</span> Report Card</a>
+      <a class="nav-item" href="challenges.html">        <span class="icon">🏆</span> Challenges</a>
+      <a class="nav-item" href="settings.html">          <span class="icon">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-bottom">
       <button class="btn-logout" id="logoutBtn">⎋ Logout</button>
@@ -39,57 +104,82 @@
     </div>
 
     <div id="alertBox" class="alert"></div>
-
-    <!-- Stats row -->
-    <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:24px;">
-      <div class="stat-card purple">
-        <div class="stat-icon">🔥</div>
-        <div class="stat-value" id="totalCalories">--</div>
-        <div class="stat-label">Calories burned today</div>
-      </div>
-      <div class="stat-card amber">
-        <div class="stat-icon">🎯</div>
-        <div class="stat-value" id="calorieGoalDisplay">--</div>
-        <div class="stat-label">Daily goal (kcal)</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-icon">📈</div>
-        <div class="stat-value" id="pctDisplay">--%</div>
-        <div class="stat-label">Goal achieved</div>
-      </div>
+    <div class="cal-message">
+      <span class="flame-icon">🔥</span>
+      <span id="calMsgText">Sync from Google Fit to see your calorie burn today!</span>
     </div>
 
-    <!-- Progress -->
-    <div class="card" style="margin-bottom:24px;">
-      <div class="section-title">DAILY PROGRESS</div>
-      <div class="progress-wrap">
-        <div class="progress-label"><span>Calories burned</span><span id="progressLabel">0 / -- kcal</span></div>
-        <div class="progress-bar"><div class="progress-fill purple" id="progress-fill"></div></div>
-      </div>
+    <!-- Hero card -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="cal-hero">
+        <!-- Donut ring -->
+        <div class="donut-wrap">
+          <svg class="donut-svg" viewBox="0 0 180 180">
+            <defs>
+              <linearGradient id="calGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#7c3aed"/>
+                <stop offset="100%" stop-color="#f59e0b"/>
+              </linearGradient>
+            </defs>
+            <circle class="donut-bg"   cx="90" cy="90" r="85"/>
+            <circle class="donut-fill" cx="90" cy="90" r="85" id="calRing"/>
+          </svg>
+          <div class="donut-center">
+            <div class="donut-val"  id="totalCalories">0</div>
+            <div class="donut-unit">KCAL BURNED</div>
+            <div class="donut-pct"  id="calPct">0%</div>
+          </div>
+        </div>
 
-      <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
-        <button class="btn btn-primary" id="fetchCaloriesBtn">🔄 Sync from Google Fit</button>
-        <button class="btn btn-google" id="googleLoginBtn">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G"> Connect Google
-        </button>
+        <!-- Stats + buttons -->
+        <div style="flex:1;">
+          <div class="stat-pills">
+            <div class="stat-pill purple">
+              <div class="pill-val" id="calGoalDisplay">500</div>
+              <div class="pill-label">🎯 Daily goal (kcal)</div>
+            </div>
+            <div class="stat-pill amber">
+              <div class="pill-val" id="calRemainingDisplay">500</div>
+              <div class="pill-label">⚡ Remaining (kcal)</div>
+            </div>
+            <div class="stat-pill green">
+              <div class="pill-val" id="calPctDisplay">0%</div>
+              <div class="pill-label">📈 Goal achieved</div>
+            </div>
+            <div class="stat-pill red">
+              <div class="pill-val" id="calStreakDisplay">0</div>
+              <div class="pill-label">🔥 Day streak</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="fetchCaloriesBtn" style="flex:1;">🔄 Sync from Google Fit</button>
+            <button class="btn btn-google"  id="googleLoginBtn">
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G"> Connect Google
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Set goal -->
-    <div class="card" style="margin-bottom:24px;">
+    <div class="card" style="margin-bottom:20px;">
       <div class="section-title">SET CALORIE GOAL</div>
-      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
-        <div class="form-group" style="flex:1;min-width:160px;margin:0;">
-          <label class="form-label">Daily Goal (kcal)</label>
-          <input type="number" id="calorieGoalInput" class="form-input" placeholder="e.g. 500" min="50">
-        </div>
+      <div class="goal-row" style="margin-bottom:12px;">
+        <input type="number" id="calorieGoalInput" class="form-input" placeholder="Enter daily goal in kcal" min="50">
         <button class="btn btn-warning" id="setGoalBtn">Set Goal</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="setGoalQuick(300)">🚶 300 kcal</button>
+        <button class="btn btn-secondary" onclick="setGoalQuick(500)">🏃 500 kcal</button>
+        <button class="btn btn-secondary" onclick="setGoalQuick(700)">💪 700 kcal</button>
+        <button class="btn btn-secondary" onclick="setGoalQuick(1000)">🏋️ 1000 kcal</button>
       </div>
     </div>
 
     <!-- Chart -->
     <div class="card">
-      <div class="section-title">BURN HISTORY</div>
+      <div class="section-title">BURN HISTORY (14 DAYS)</div>
       <div class="chart-wrap">
         <canvas id="calorieChart" height="100"></canvas>
       </div>
@@ -101,28 +191,65 @@
   if (localStorage.getItem("isLoggedIn") !== "true") window.location.href = "index.html";
 
   const alertBox = document.getElementById("alertBox");
-  function showAlert(msg, type = "info") {
+  function showAlert(msg, type="info") {
     alertBox.textContent = msg;
     alertBox.className = `alert alert-${type} show`;
     setTimeout(() => alertBox.classList.remove("show"), 4000);
   }
 
+  const CIRC = 2 * Math.PI * 85;
   let accessToken    = localStorage.getItem("googleAccessToken");
   let calorieGoal    = parseInt(localStorage.getItem("calorieGoal")) || 500;
   let calorieHistory = JSON.parse(localStorage.getItem("calorieHistory")) || [];
   let chartInstance  = null;
+  const streak       = parseInt(localStorage.getItem("streakCount")) || 0;
 
-  // Handle OAuth redirect
+  const calMessages = [
+    { min:0,   text:"Let's get burning! Sync your Google Fit data." },
+    { min:1,   text:"You've started burning — keep moving!" },
+    { min:100, text:"Warming up nicely. Great effort!" },
+    { min:300, text:"Solid burn so far. Keep the intensity up!" },
+    { min:500, text:"Goal reached! Outstanding effort today 🔥" },
+    { min:700, text:"You're crushing it — well beyond your goal!" },
+  ];
+
+  function getCalMsg(cal) {
+    const msgs = calMessages.filter(m => cal >= m.min);
+    return msgs[msgs.length - 1].text;
+  }
+
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.has("access_token")) {
     accessToken = urlParams.get("access_token");
     localStorage.setItem("googleAccessToken", accessToken);
-    showAlert("Google Fit connected successfully!", "success");
+    showAlert("Google Fit connected!", "success");
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 
-  document.getElementById("calorieGoalDisplay").textContent = calorieGoal + " kcal";
+  document.getElementById("calStreakDisplay").textContent = streak;
+  document.getElementById("calGoalDisplay").textContent  = calorieGoal;
   renderChart();
+
+  function updateDonut(burned) {
+    const pct = Math.min((burned / calorieGoal), 1);
+    const remaining = Math.max(calorieGoal - burned, 0);
+    document.getElementById("calRing").style.strokeDasharray  = CIRC;
+    document.getElementById("calRing").style.strokeDashoffset = CIRC * (1 - pct);
+    document.getElementById("totalCalories").textContent      = Math.round(burned);
+    document.getElementById("calPct").textContent             = Math.round(pct * 100) + "%";
+    document.getElementById("calPctDisplay").textContent      = Math.round(pct * 100) + "%";
+    document.getElementById("calRemainingDisplay").textContent= Math.round(remaining);
+    document.getElementById("calMsgText").textContent         = getCalMsg(burned);
+  }
+
+  function setGoalQuick(val) {
+    calorieGoal = val;
+    localStorage.setItem("calorieGoal", val);
+    document.getElementById("calGoalDisplay").textContent = val;
+    const burned = parseFloat(localStorage.getItem("calorieCount")) || 0;
+    updateDonut(burned);
+    showAlert(`Goal set to ${val} kcal.`, "success");
+  }
 
   document.getElementById("googleLoginBtn").addEventListener("click", () => {
     window.location.href = `http://localhost:3000/auth/google?state=${encodeURIComponent("calorie.html")}`;
@@ -131,80 +258,64 @@
   document.getElementById("setGoalBtn").addEventListener("click", () => {
     const val = parseInt(document.getElementById("calorieGoalInput").value);
     if (!val || val < 50) return showAlert("Enter a valid goal (min 50 kcal).", "error");
-    calorieGoal = val;
-    localStorage.setItem("calorieGoal", calorieGoal);
-    document.getElementById("calorieGoalDisplay").textContent = calorieGoal + " kcal";
-    const burned = parseFloat(localStorage.getItem("calorieCount")) || 0;
-    updateProgress(burned);
-    showAlert(`Goal set to ${calorieGoal} kcal.`, "success");
+    setGoalQuick(val);
   });
 
-  document.getElementById("fetchCaloriesBtn").addEventListener("click", fetchCalories);
-
-  async function fetchCalories() {
+  document.getElementById("fetchCaloriesBtn").addEventListener("click", async () => {
     if (!accessToken) return showAlert("Connect Google Fit first.", "error");
-    showAlert("Syncing from Google Fit…", "info");
+    showAlert("Syncing…", "info");
     try {
       const res  = await fetch(`http://localhost:3000/api/calories?access_token=${accessToken}`);
-      if (!res.ok) throw new Error("Server error");
+      if (!res.ok) throw new Error();
       const data = await res.json();
       const cal  = parseFloat(data.calories).toFixed(1);
-
-      document.getElementById("totalCalories").textContent = cal + " kcal";
       localStorage.setItem("calorieCount", cal);
-
-      calorieHistory.push({ day: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}), val: parseFloat(cal) });
+      calorieHistory.push({ day: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}), val:parseFloat(cal) });
       if (calorieHistory.length > 14) calorieHistory.shift();
       localStorage.setItem("calorieHistory", JSON.stringify(calorieHistory));
-
-      updateProgress(cal);
+      updateDonut(parseFloat(cal));
       renderChart();
       showAlert("Synced successfully!", "success");
-    } catch (err) {
-      showAlert("Failed to sync. Check server & token.", "error");
-    }
-  }
-
-  function updateProgress(burned) {
-    const pct = Math.min(Math.round((parseFloat(burned) / calorieGoal) * 100), 100);
-    document.getElementById("progress-fill").style.width = pct + "%";
-    document.getElementById("progressLabel").textContent = `${burned} / ${calorieGoal} kcal`;
-    document.getElementById("pctDisplay").textContent = pct + "%";
-  }
+    } catch { showAlert("Sync failed. Check server & token.", "error"); }
+  });
 
   function renderChart() {
     const ctx = document.getElementById("calorieChart").getContext("2d");
     if (chartInstance) chartInstance.destroy();
     chartInstance = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: calorieHistory.map(h => h.day || `Day ${calorieHistory.indexOf(h)+1}`),
-        datasets: [{
-          label: "Calories Burned (kcal)",
+      type:"bar",
+      data:{
+        labels: calorieHistory.map(h => h.day),
+        datasets:[{
+          label:"Calories Burned (kcal)",
           data:  calorieHistory.map(h => h.val || h),
-          backgroundColor: "rgba(124,58,237,0.75)",
-          borderColor: "#7c3aed",
-          borderWidth: 1,
-          borderRadius: 6
+          backgroundColor:"rgba(124,58,237,0.25)",
+          borderColor:"#7c3aed",
+          borderWidth:2, borderRadius:8, borderSkipped:false,
+        },{
+          label:"Goal",
+          data: calorieHistory.map(() => calorieGoal),
+          type:"line",
+          borderColor:"rgba(245,158,11,.4)",
+          borderDash:[5,5],
+          borderWidth:2,
+          pointRadius:0,
+          fill:false,
         }]
       },
-      options: {
-        responsive: true,
-        plugins: { legend: { labels: { color: "#94a3b8" } } },
-        scales: {
-          x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.04)" } },
-          y: { beginAtZero: true, ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.06)" } }
+      options:{
+        responsive:true,
+        plugins:{ legend:{ labels:{ color:"#94a3b8" } } },
+        scales:{
+          x:{ ticks:{color:"#94a3b8"}, grid:{color:"rgba(255,255,255,0.04)"} },
+          y:{ beginAtZero:true, ticks:{color:"#94a3b8"}, grid:{color:"rgba(255,255,255,0.06)"} }
         }
       }
     });
   }
 
-  // Restore last known value
   const saved = localStorage.getItem("calorieCount");
-  if (saved) {
-    document.getElementById("totalCalories").textContent = saved + " kcal";
-    updateProgress(saved);
-  }
+  if (saved) updateDonut(parseFloat(saved));
 
   document.getElementById("logoutBtn").addEventListener("click", () => {
     localStorage.setItem("isLoggedIn","false");
