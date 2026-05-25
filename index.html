@@ -4,83 +4,472 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FitTrackr — Login</title>
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:   #7c3aed;
+      --accent:    #f59e0b;
+      --danger:    #ef4444;
+      --success:   #10b981;
+      --glass-bg:  rgba(255,255,255,0.05);
+      --glass-border: rgba(255,255,255,0.12);
+      --text:      #f1f5f9;
+      --muted:     #94a3b8;
+    }
+
+    body {
+      min-height:      100vh;
+      display:         flex;
+      align-items:     center;
+      justify-content: center;
+      font-family:     'DM Sans', sans-serif;
+      background:      #060612;
+      overflow:        hidden;
+      position:        relative;
+    }
+
+    /* ── Animated mesh background ── */
+    .bg {
+      position: fixed;
+      inset:    0;
+      z-index:  0;
+    }
+    .orb {
+      position:      absolute;
+      border-radius: 50%;
+      filter:        blur(80px);
+      opacity:       0.35;
+      animation:     drift 12s ease-in-out infinite;
+    }
+    .orb-1 { width:600px; height:600px; background:radial-gradient(#7c3aed,transparent 70%); top:-150px; left:-150px; animation-delay:0s; }
+    .orb-2 { width:500px; height:500px; background:radial-gradient(#f59e0b,transparent 70%); bottom:-100px; right:-100px; animation-delay:-4s; }
+    .orb-3 { width:400px; height:400px; background:radial-gradient(#06b6d4,transparent 70%); top:40%; left:40%; animation-delay:-8s; }
+
+    @keyframes drift {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(40px,-30px) scale(1.05); }
+      66%      { transform: translate(-30px,40px) scale(0.95); }
+    }
+
+    /* Grid lines overlay */
+    .grid-overlay {
+      position: fixed;
+      inset:    0;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      z-index: 0;
+    }
+
+    /* Floating particles */
+    .particles { position:fixed; inset:0; z-index:0; overflow:hidden; }
+    .particle {
+      position:      absolute;
+      width:         3px; height:3px;
+      border-radius: 50%;
+      background:    rgba(124,58,237,0.6);
+      animation:     float-up linear infinite;
+    }
+    @keyframes float-up {
+      0%   { transform:translateY(100vh) scale(0); opacity:0; }
+      10%  { opacity:1; }
+      90%  { opacity:1; }
+      100% { transform:translateY(-100px) scale(1); opacity:0; }
+    }
+
+    /* ── Card ── */
+    .auth-wrap {
+      position:   relative;
+      z-index:    10;
+      width:      100%;
+      max-width:  440px;
+      padding:    20px;
+      animation:  card-in 0.7s cubic-bezier(0.34,1.3,0.64,1) both;
+    }
+    @keyframes card-in {
+      from { opacity:0; transform:translateY(40px) scale(0.96); }
+      to   { opacity:1; transform:translateY(0)    scale(1); }
+    }
+
+    .glass-card {
+      background:    rgba(255,255,255,0.04);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border:        1px solid rgba(255,255,255,0.1);
+      border-radius: 28px;
+      padding:       44px 40px;
+      box-shadow:
+        0 32px 80px rgba(0,0,0,0.6),
+        0 0 0 1px rgba(124,58,237,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Shimmer top edge */
+    .glass-card::before {
+      content:  '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124,58,237,0.8), rgba(245,158,11,0.6), transparent);
+    }
+
+    /* ── Logo ── */
+    .logo-wrap { text-align:center; margin-bottom:8px; }
+    .logo-icon {
+      width:            64px; height:64px;
+      border-radius:    18px;
+      background:       linear-gradient(135deg, #7c3aed, #5b21b6);
+      display:          inline-flex;
+      align-items:      center;
+      justify-content:  center;
+      font-size:        1.8rem;
+      margin-bottom:    16px;
+      box-shadow:       0 8px 32px rgba(124,58,237,0.5);
+      animation:        logo-pulse 3s ease-in-out infinite;
+    }
+    @keyframes logo-pulse {
+      0%,100% { box-shadow:0 8px 32px rgba(124,58,237,0.5); }
+      50%     { box-shadow:0 8px 48px rgba(124,58,237,0.8), 0 0 0 8px rgba(124,58,237,0.1); }
+    }
+
+    .logo-text {
+      font-family:    'Bebas Neue', sans-serif;
+      font-size:      2.2rem;
+      letter-spacing: 4px;
+      color:          #f1f5f9;
+      line-height:    1;
+    }
+    .logo-text span { color: #f59e0b; }
+    .tagline {
+      color:      rgba(148,163,184,0.8);
+      font-size:  .85rem;
+      margin-top: 6px;
+      letter-spacing: .5px;
+    }
+
+    /* ── Heading ── */
+    .auth-heading {
+      font-family:    'Bebas Neue', sans-serif;
+      font-size:      1.5rem;
+      letter-spacing: 3px;
+      color:          var(--text);
+      margin:         28px 0 20px;
+      position:       relative;
+      display:        flex;
+      align-items:    center;
+      gap:            12px;
+    }
+    .auth-heading::after {
+      content:  '';
+      flex:     1;
+      height:   1px;
+      background: linear-gradient(90deg, rgba(124,58,237,0.4), transparent);
+    }
+
+    /* ── Alert ── */
+    .alert {
+      border-radius: 10px;
+      padding:       10px 14px;
+      font-size:     .85rem;
+      font-weight:   500;
+      margin-bottom: 16px;
+      display:       none;
+      animation:     fadeIn .25s ease;
+    }
+    .alert.show        { display:block; }
+    .alert-error       { background:rgba(239,68,68,0.15);  border:1px solid rgba(239,68,68,0.3);  color:#fca5a5; }
+    .alert-success     { background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#6ee7b7; }
+    .alert-info        { background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Input group ── */
+    .input-group {
+      position:      relative;
+      margin-bottom: 14px;
+    }
+    .input-icon {
+      position:   absolute;
+      left:       16px;
+      top:        50%;
+      transform:  translateY(-50%);
+      font-size:  1rem;
+      opacity:    .5;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .glass-input {
+      width:           100%;
+      padding:         14px 16px 14px 44px;
+      background:      rgba(255,255,255,0.06);
+      border:          1px solid rgba(255,255,255,0.1);
+      border-radius:   12px;
+      color:           var(--text);
+      font-family:     'DM Sans', sans-serif;
+      font-size:       .95rem;
+      outline:         none;
+      transition:      border-color .2s, background .2s, box-shadow .2s;
+    }
+    .glass-input::placeholder { color: rgba(148,163,184,0.5); }
+    .glass-input:focus {
+      border-color: rgba(124,58,237,0.6);
+      background:   rgba(124,58,237,0.08);
+      box-shadow:   0 0 0 3px rgba(124,58,237,0.15);
+    }
+    .glass-input:focus + .input-icon,
+    .input-group:focus-within .input-icon { opacity:1; }
+
+    /* ── Submit button ── */
+    .btn-submit {
+      width:         100%;
+      padding:       15px;
+      margin-top:    6px;
+      background:    linear-gradient(135deg, #7c3aed, #5b21b6);
+      border:        none;
+      border-radius: 12px;
+      color:         #fff;
+      font-family:   'DM Sans', sans-serif;
+      font-size:     1rem;
+      font-weight:   700;
+      letter-spacing:.5px;
+      cursor:        pointer;
+      position:      relative;
+      overflow:      hidden;
+      transition:    transform .2s, box-shadow .2s;
+      box-shadow:    0 8px 24px rgba(124,58,237,0.4);
+    }
+    .btn-submit::before {
+      content:    '';
+      position:   absolute;
+      inset:      0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      opacity:    0;
+      transition: opacity .2s;
+    }
+    .btn-submit:hover  { transform:translateY(-2px); box-shadow:0 12px 32px rgba(124,58,237,0.55); }
+    .btn-submit:hover::before { opacity:1; }
+    .btn-submit:active { transform:translateY(0); }
+    .btn-submit:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+
+    /* Shimmer sweep on hover */
+    .btn-submit::after {
+      content:    '';
+      position:   absolute;
+      top: 0; left:-100%;
+      width:50%; height:100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transform:  skewX(-20deg);
+      transition: left .5s;
+    }
+    .btn-submit:hover::after { left:150%; }
+
+    /* ── Divider ── */
+    .divider {
+      display:        flex;
+      align-items:    center;
+      gap:            12px;
+      margin:         20px 0;
+      color:          rgba(148,163,184,0.4);
+      font-size:      .8rem;
+      letter-spacing: 1px;
+    }
+    .divider::before, .divider::after {
+      content:    '';
+      flex:       1;
+      height:     1px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    /* ── Features row ── */
+    .features {
+      display:   flex;
+      gap:       8px;
+      margin-top:20px;
+      flex-wrap: wrap;
+    }
+    .feat-chip {
+      flex:          1;
+      min-width:     80px;
+      padding:       10px 8px;
+      background:    rgba(255,255,255,0.04);
+      border:        1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      text-align:    center;
+      font-size:     .72rem;
+      color:         rgba(148,163,184,0.7);
+      line-height:   1.4;
+    }
+    .feat-chip span { display:block; font-size:1.2rem; margin-bottom:4px; }
+
+    /* ── Auth link ── */
+    .auth-link {
+      text-align:  center;
+      margin-top:  22px;
+      color:       rgba(148,163,184,0.6);
+      font-size:   .88rem;
+    }
+    .auth-link a {
+      color:           #a78bfa;
+      text-decoration: none;
+      font-weight:     600;
+      transition:      color .2s;
+    }
+    .auth-link a:hover { color:#f59e0b; }
+
+    /* ── Password toggle ── */
+    .pw-toggle {
+      position:   absolute;
+      right:      14px;
+      top:        50%;
+      transform:  translateY(-50%);
+      background: none;
+      border:     none;
+      color:      rgba(148,163,184,0.5);
+      cursor:     pointer;
+      font-size:  1rem;
+      padding:    4px;
+      transition: color .2s;
+    }
+    .pw-toggle:hover { color:var(--text); }
+  </style>
 </head>
-<body class="auth-page">
+<body>
 
-  <div class="auth-card">
-    <div class="logo">FIT<span style="color:var(--accent)">TRACKR</span></div>
-    <p class="tagline">Your personal fitness & nutrition dashboard</p>
+<!-- Background -->
+<div class="bg">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+<div class="grid-overlay"></div>
+<div class="particles" id="particles"></div>
 
-    <h2>WELCOME BACK</h2>
+<!-- Card -->
+<div class="auth-wrap">
+  <div class="glass-card">
+
+    <!-- Logo -->
+    <div class="logo-wrap">
+      <div class="logo-icon">🏋️</div>
+      <div class="logo-text">FIT<span>TRACKR</span></div>
+      <p class="tagline">Your personal fitness & nutrition dashboard</p>
+    </div>
+
+    <div class="auth-heading">WELCOME BACK</div>
 
     <div id="alertBox" class="alert"></div>
 
     <form id="loginForm" novalidate>
-      <input type="text"     id="name"     class="input-box" placeholder="Your Name"     required autocomplete="name">
-      <input type="email"    id="email"    class="input-box" placeholder="Email Address" required autocomplete="email">
-      <input type="password" id="password" class="input-box" placeholder="Password"      required autocomplete="current-password">
-      <button type="submit" class="btn btn-primary" id="loginBtn">
-        <span id="btnText">Login</span>
+
+      <div class="input-group">
+        <span class="input-icon">👤</span>
+        <input type="text" id="name" class="glass-input" placeholder="Your Name" required autocomplete="name">
+      </div>
+
+      <div class="input-group">
+        <span class="input-icon">✉️</span>
+        <input type="email" id="email" class="glass-input" placeholder="Email Address" required autocomplete="email">
+      </div>
+
+      <div class="input-group">
+        <span class="input-icon">🔒</span>
+        <input type="password" id="password" class="glass-input" placeholder="Password" required autocomplete="current-password">
+        <button type="button" class="pw-toggle" id="pwToggle" title="Show/hide password">👁️</button>
+      </div>
+
+      <button type="submit" class="btn-submit" id="loginBtn">
+        <span id="btnText">Login to FitTrackr</span>
       </button>
     </form>
 
-    <p class="auth-link">Don't have an account? <a href="signup.html">Sign Up</a></p>
+    <div class="divider">OR</div>
+
+    <!-- Feature chips — shows value prop -->
+    <!--<div class="features">
+      <div class="feat-chip"><span>📊</span>Live Stats</div>
+      <div class="feat-chip"><span>🍎</span>Food Scanner</div>
+      <div class="feat-chip"><span>⚡</span>AI Planner</div>
+      <div class="feat-chip"><span>📈</span>Reports</div>
+    </div> -->
+
+    <p class="auth-link">Don't have an account? <a href="signup.html">Create one free →</a></p>
   </div>
+</div>
 
-  <script>
-    // Redirect if already logged in
-    if (localStorage.getItem("isLoggedIn") === "true") {
-      window.location.href = "dashboard.html";
-    }
+<script>
+  // Redirect if already logged in
+  if (localStorage.getItem("isLoggedIn") === "true") window.location.href = "dashboard.html";
 
-    const alertBox   = document.getElementById("alertBox");
-    const loginForm  = document.getElementById("loginForm");
-    const btnText    = document.getElementById("btnText");
+  // Generate floating particles
+  const pc = document.getElementById("particles");
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      width:${Math.random()*3+1}px;
+      height:${Math.random()*3+1}px;
+      animation-duration:${Math.random()*12+8}s;
+      animation-delay:${Math.random()*10}s;
+      background:${Math.random()>0.5 ? 'rgba(124,58,237,0.7)' : 'rgba(245,158,11,0.5)'};
+    `;
+    pc.appendChild(p);
+  }
 
-    function showAlert(msg, type = "error") {
-      alertBox.textContent = msg;
-      alertBox.className = `alert alert-${type} show`;
-    }
+  // Password toggle
+  document.getElementById("pwToggle").addEventListener("click", function() {
+    const pw = document.getElementById("password");
+    if (pw.type === "password") { pw.type = "text";     this.textContent = "🙈"; }
+    else                        { pw.type = "password"; this.textContent = "👁️"; }
+  });
 
-    loginForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
+  const alertBox  = document.getElementById("alertBox");
+  const btnText   = document.getElementById("btnText");
 
-      const name     = document.getElementById("name").value.trim();
-      const email    = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+  function showAlert(msg, type = "error") {
+    alertBox.textContent = msg;
+    alertBox.className   = `alert alert-${type} show`;
+  }
 
-      if (!name || !email || !password) {
-        return showAlert("Please fill in all fields.");
-      }
+  document.getElementById("loginForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const name     = document.getElementById("name").value.trim();
+    const email    = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
 
-      btnText.textContent = "Logging in…";
-      document.getElementById("loginBtn").disabled = true;
+    if (!name || !email || !password) return showAlert("Please fill in all fields.");
 
-      try {
-        const res = await fetch("http://localhost:3000/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password })
-        });
-        const data = await res.json();
+    btnText.textContent = "Logging in…";
+    document.getElementById("loginBtn").disabled = true;
 
-        if (res.ok && data.message === "Login successful") {
-          localStorage.setItem("isLoggedIn", "true");
-          localStorage.setItem("username", data.name);
-          showAlert("Login successful! Redirecting…", "success");
-          setTimeout(() => window.location.href = "dashboard.html", 900);
-        } else {
-          showAlert(data.message || "Invalid credentials. Please try again.");
-          btnText.textContent = "Login";
-          document.getElementById("loginBtn").disabled = false;
-        }
-      } catch (err) {
-        showAlert("Network error. Is the server running?");
-        btnText.textContent = "Login";
+    try {
+      const res  = await fetch("http://localhost:3000/login", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ name, email, password })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.message === "Login successful") {
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("username", data.name);
+        showAlert("Login successful! Redirecting…", "success");
+        setTimeout(() => window.location.href = "dashboard.html", 900);
+      } else {
+        showAlert(data.message || "Invalid credentials. Please try again.");
+        btnText.textContent = "Login to FitTrackr";
         document.getElementById("loginBtn").disabled = false;
       }
-    });
-  </script>
+    } catch {
+      showAlert("Network error. Is the server running?");
+      btnText.textContent = "Login to FitTrackr";
+      document.getElementById("loginBtn").disabled = false;
+    }
+  });
+</script>
 </body>
 </html>
