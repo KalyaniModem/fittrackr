@@ -3,9 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FitTrackr — Heart Rate</title>
+  <title>FitTrackr — Heart Points</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .hp-hero { display:flex; gap:32px; align-items:center; flex-wrap:wrap; }
+    .hp-ring-wrap { position:relative; width:200px; height:200px; flex-shrink:0; }
+    .hp-ring-svg  { width:200px; height:200px; transform:rotate(-90deg); }
+    .hp-ring-bg   { fill:none; stroke:rgba(239,68,68,.12); stroke-width:14; }
+    .hp-ring-fill {
+      fill:none; stroke:url(#hpGradient); stroke-width:14; stroke-linecap:round;
+      stroke-dasharray:534; stroke-dashoffset:534;
+      transition:stroke-dashoffset 1.2s cubic-bezier(.34,1.1,.64,1);
+    }
+    .hp-ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .hp-heart { font-size:2rem; animation:heartbeat 1.2s ease-in-out infinite; }
+    @keyframes heartbeat { 0%,100%{transform:scale(1);} 14%{transform:scale(1.3);} 28%{transform:scale(1);} 42%{transform:scale(1.15);} }
+    .hp-value { font-family:var(--font-head); font-size:2.2rem; letter-spacing:2px; line-height:1.1; }
+    .hp-unit  { font-size:.72rem; color:var(--muted); letter-spacing:2px; margin-top:2px; }
+    .hp-pct   { font-size:.9rem; color:#fca5a5; font-weight:700; margin-top:2px; }
+    .hp-pills { display:grid; grid-template-columns:1fr 1fr; gap:12px; flex:1; }
+    .hp-pill { background:var(--surface2); border-radius:14px; padding:16px; border:1px solid var(--border); position:relative; overflow:hidden; transition:transform .2s; }
+    .hp-pill:hover { transform:translateY(-2px); }
+    .hp-pill::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:4px 0 0 4px; }
+    .hp-pill.red::before    { background:linear-gradient(180deg,#ef4444,#fca5a5); }
+    .hp-pill.orange::before { background:linear-gradient(180deg,#f97316,#fdba74); }
+    .hp-pill.green::before  { background:linear-gradient(180deg,#10b981,#6ee7b7); }
+    .hp-pill.purple::before { background:linear-gradient(180deg,#7c3aed,#a78bfa); }
+    .hp-pill-val   { font-family:var(--font-head); font-size:1.5rem; letter-spacing:2px; }
+    .hp-pill-label { font-size:.75rem; color:var(--muted); margin-top:2px; }
+    .who-bar-wrap { margin-top:16px; }
+    .who-bar-labels { display:flex; justify-content:space-between; font-size:.78rem; color:var(--muted); margin-bottom:5px; }
+    .who-progress { height:10px; background:rgba(239,68,68,.1); border-radius:8px; overflow:hidden; }
+    .who-fill { height:100%; border-radius:8px; background:linear-gradient(90deg,#ef4444,#f97316); transition:width 1s cubic-bezier(.34,1.1,.64,1); width:0%; }
+    .hp-status-card { display:flex; align-items:center; gap:12px; border-radius:12px; padding:14px 18px; margin-bottom:20px; font-size:.9rem; }
+    .hp-status-card.low   { background:rgba(239,68,68,.07);  border:1px solid rgba(239,68,68,.2);  color:#fca5a5; }
+    .hp-status-card.mid   { background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.2); color:#fcd34d; }
+    .hp-status-card.good  { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.2); color:#6ee7b7; }
+    .hp-status-card.great { background:rgba(59,130,246,.07); border:1px solid rgba(59,130,246,.2); color:#93c5fd; }
+    .info-tiles { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px; }
+    .info-tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; text-align:center; position:relative; overflow:hidden; transition:transform .2s; }
+    .info-tile:hover { transform:translateY(-3px); }
+    .info-tile::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+    .info-tile.red::before    { background:linear-gradient(90deg,#ef4444,#fca5a5); }
+    .info-tile.orange::before { background:linear-gradient(90deg,#f97316,#fdba74); }
+    .info-tile.green::before  { background:linear-gradient(90deg,#10b981,#6ee7b7); }
+    .info-tile-val   { font-family:var(--font-head); font-size:1.6rem; letter-spacing:2px; }
+    .info-tile-label { font-size:.75rem; color:var(--muted); margin-top:4px; }
+    .explainer { background:rgba(239,68,68,.05); border:1px solid rgba(239,68,68,.15); border-radius:14px; padding:18px 20px; color:var(--muted); font-size:.85rem; line-height:1.9; }
+    .explainer strong { color:var(--text); }
+  </style>
 </head>
 <body><script>
   var _s = JSON.parse(localStorage.getItem("appSettings") || "{}");
@@ -15,16 +62,19 @@
   <aside class="sidebar">
     <div class="sidebar-logo">FIT<span>TRACKR</span></div>
     <nav>
-      <a class="nav-item" href="dashboard.html">       <span class="icon">🏠</span> Dashboard</a>
-      <a class="nav-item" href="profile.html">         <span class="icon">👤</span> Profile</a>
-      <a class="nav-item" href="water_intake.html">    <span class="icon">💧</span> Water Intake</a>
-      <a class="nav-item" href="step.html">            <span class="icon">👣</span> Steps</a>
-      <a class="nav-item" href="calorie.html">         <span class="icon">🔥</span> Calories</a>
-      <a class="nav-item active" href="heart_rate.html"><span class="icon">❤️</span> Heart Rate</a>
-       <a class="nav-item" href="workout_planner.html"> <span class="icon">⚡</span> Smart Planner</a>
-       <a class="nav-item" href="food_scanner.html">   <span class="icon">🍎</span> Food Scanner</a>
-      <a class="nav-item" href="report.html">           <span class="icon">📊</span> Report Card</a>
-      <a class="nav-item" href="settings.html">        <span class="icon">⚙️</span> Settings</a>
+      <a class="nav-item" href="dashboard.html">         <span class="icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="profile.html">           <span class="icon">👤</span> Profile</a>
+      <a class="nav-item" href="water_intake.html">      <span class="icon">💧</span> Water Intake</a>
+      <a class="nav-item" href="step.html">              <span class="icon">👣</span> Steps</a>
+      <a class="nav-item" href="calorie.html">           <span class="icon">🔥</span> Calories</a>
+      <a class="nav-item active" href="heart_rate.html"> <span class="icon">❤️</span> Heart Points</a>
+      <a class="nav-item" href="workout_planner.html">   <span class="icon">⚡</span> Smart Planner</a>
+      <a class="nav-item" href="workout_log.html">        <span class="icon">🏋️</span> Workout Logger</a>
+      <a class="nav-item" href="body_metrics.html">       <span class="icon">📏</span> Body Metrics</a>
+      <a class="nav-item" href="food_scanner.html">      <span class="icon">🍎</span> Food Scanner</a>
+      <a class="nav-item" href="report.html">            <span class="icon">📊</span> Report Card</a>
+      <a class="nav-item" href="challenges.html">        <span class="icon">🏆</span> Challenges</a>
+      <a class="nav-item" href="settings.html">          <span class="icon">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-bottom">
       <button class="btn-logout" id="logoutBtn">⎋ Logout</button>
@@ -33,54 +83,104 @@
 
   <main class="main-content">
     <div class="page-header">
-      <h1>❤️ HEART RATE</h1>
-      <p>Monitor your BPM from Google Fit</p>
+      <h1>❤️ HEART POINTS</h1>
+      <p>Your Google Fit activity intensity score — synced daily</p>
     </div>
-
     <div id="alertBox" class="alert"></div>
-
-    <!-- Stats -->
-    <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:24px;">
-      <div class="stat-card red">
-        <div class="stat-icon pulse">❤️</div>
-        <div class="stat-value" id="currentBPM">--</div>
-        <div class="stat-label">Current BPM</div>
-      </div>
-      <div class="stat-card amber">
-        <div class="stat-icon">📊</div>
-        <div class="stat-value" id="avgBPM">--</div>
-        <div class="stat-label">Average BPM</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-icon">💪</div>
-        <div class="stat-value" id="zoneDisplay">--</div>
-        <div class="stat-label">Heart rate zone</div>
-      </div>
+    <div class="hp-status-card low" id="hpStatusCard">
+      <span style="font-size:1.4rem;" id="hpStatusIcon">❤️</span>
+      <span id="hpStatusText">Sync from Google Fit to see your Heart Points today!</span>
     </div>
 
-    <!-- Actions -->
-    <div class="card" style="margin-bottom:24px;">
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <button class="btn btn-primary" id="fetchHRBtn">🔄 Sync Heart Rate</button>
-        <button class="btn btn-google" id="googleLoginBtn">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G"> Connect Google
-        </button>
-      </div>
-    </div>
-
-    <!-- Chart + History -->
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:18px;">
-      <div class="card">
-        <div class="section-title">BPM OVER TIME</div>
-        <div class="chart-wrap">
-          <canvas id="heartRateChart" height="140"></canvas>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="hp-hero">
+        <div class="hp-ring-wrap">
+          <svg class="hp-ring-svg" viewBox="0 0 180 180">
+            <defs>
+              <linearGradient id="hpGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#ef4444"/>
+                <stop offset="100%" stop-color="#f97316"/>
+              </linearGradient>
+            </defs>
+            <circle class="hp-ring-bg"   cx="90" cy="90" r="85"/>
+            <circle class="hp-ring-fill" cx="90" cy="90" r="85" id="hpRing"/>
+          </svg>
+          <div class="hp-ring-center">
+            <div class="hp-heart">❤️</div>
+            <div class="hp-value" id="hpTodayVal">0</div>
+            <div class="hp-unit">HEART PTS</div>
+            <div class="hp-pct" id="hpPct">0% of goal</div>
+          </div>
+        </div>
+        <div style="flex:1;">
+          <div class="hp-pills">
+            <div class="hp-pill red">
+              <div class="hp-pill-val">22</div>
+              <div class="hp-pill-label">🎯 Daily WHO goal</div>
+            </div>
+            <div class="hp-pill orange">
+              <div class="hp-pill-val" id="hpWeekTotal">0</div>
+              <div class="hp-pill-label">📅 This week total</div>
+            </div>
+            <div class="hp-pill green">
+              <div class="hp-pill-val">150</div>
+              <div class="hp-pill-label">🏆 Weekly WHO goal</div>
+            </div>
+            <div class="hp-pill purple">
+              <div class="hp-pill-val" id="hpWeekPct">0%</div>
+              <div class="hp-pill-label">📈 Weekly progress</div>
+            </div>
+          </div>
+          <div class="who-bar-wrap">
+            <div class="who-bar-labels">
+              <span>Weekly WHO Goal (150 pts)</span>
+              <span id="whoBarLabel">0 / 150</span>
+            </div>
+            <div class="who-progress"><div class="who-fill" id="whoFill"></div></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="fetchHPBtn" style="flex:1;">🔄 Sync Heart Points</button>
+            <button class="btn btn-google" id="googleLoginBtn">
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="G"> Connect Google
+            </button>
+          </div>
         </div>
       </div>
-      <div class="card">
-        <div class="section-title">READINGS</div>
-        <ul class="history-list" id="heartRateList">
-          <li class="history-item" style="color:var(--muted);justify-content:center;">No data yet</li>
-        </ul>
+    </div>
+
+    <div class="info-tiles">
+      <div class="info-tile red">
+        <div style="font-size:1.6rem;margin-bottom:6px;">❤️</div>
+        <div class="info-tile-val" id="tileToday">0</div>
+        <div class="info-tile-label">Today's Heart Points</div>
+      </div>
+      <div class="info-tile orange">
+        <div style="font-size:1.6rem;margin-bottom:6px;">🔥</div>
+        <div class="info-tile-val" id="tileBestDay">0</div>
+        <div class="info-tile-label">Best day this week</div>
+      </div>
+      <div class="info-tile green">
+        <div style="font-size:1.6rem;margin-bottom:6px;">📊</div>
+        <div class="info-tile-val" id="tileAvg">0</div>
+        <div class="info-tile-label">Daily average (7 days)</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="section-title">THIS WEEK'S HEART POINTS</div>
+      <div class="chart-wrap">
+        <canvas id="hpChart" height="110"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">WHAT ARE HEART POINTS?</div>
+      <div class="explainer">
+        <p>❤️ <strong>Heart Points</strong> are Google Fit's way of measuring how much your activities benefit your heart and health.</p><br>
+        <p>🚶 <strong>1 Heart Point</strong> = 1 minute of moderate activity (brisk walking, light cycling)</p>
+        <p>🏃 <strong>2 Heart Points</strong> = 1 minute of vigorous activity (running, HIIT, swimming)</p><br>
+        <p>🏆 <strong>WHO Recommendation:</strong> Earn at least <strong>150 Heart Points per week</strong> (~22/day) for major health benefits — reduced risk of heart disease, diabetes, and stroke.</p><br>
+        <p>⭐ Reaching <strong>500 Heart Points/week</strong> provides even greater benefits according to research.</p>
       </div>
     </div>
   </main>
@@ -88,100 +188,114 @@
 
 <script>
   if (localStorage.getItem("isLoggedIn") !== "true") window.location.href = "index.html";
-
   const alertBox = document.getElementById("alertBox");
   function showAlert(msg, type="info") {
     alertBox.textContent = msg;
     alertBox.className = `alert alert-${type} show`;
     setTimeout(() => alertBox.classList.remove("show"), 4000);
   }
-
+  const CIRC = 2 * Math.PI * 85;
   let accessToken = localStorage.getItem("googleAccessToken");
-  let chartInst   = null;
-
+  let chartInst = null;
+  const statusLevels = [
+    { min:0,  cls:"low",   icon:"😴", text:"No Heart Points yet today. Time to get moving!" },
+    { min:1,  cls:"low",   icon:"🚶", text:"You've started! Every minute of activity counts." },
+    { min:10, cls:"mid",   icon:"💪", text:"Good progress! Keep the activity going." },
+    { min:22, cls:"good",  icon:"🏆", text:"Daily WHO goal reached! Great job today." },
+    { min:44, cls:"great", icon:"⭐", text:"Double your daily goal — you're crushing it!" },
+    { min:75, cls:"great", icon:"🔥", text:"Incredible effort — elite level activity today!" },
+  ];
+  function getStatus(pts) {
+    const m = statusLevels.filter(s => pts >= s.min);
+    return m[m.length - 1];
+  }
+  const savedData = JSON.parse(localStorage.getItem("heartPointsData") || "null");
+  if (savedData) renderData(savedData);
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.has("access_token")) {
     accessToken = urlParams.get("access_token");
     localStorage.setItem("googleAccessToken", accessToken);
-    showAlert("Google Fit connected!", "success");
+    showAlert("Google Fit connected! Syncing…", "success");
     window.history.replaceState({}, document.title, window.location.pathname);
+    setTimeout(fetchHeartPoints, 800);
   }
-
   document.getElementById("googleLoginBtn").addEventListener("click", () => {
     window.location.href = `http://localhost:3000/auth/google?state=${encodeURIComponent("heart_rate.html")}`;
   });
-  document.getElementById("fetchHRBtn").addEventListener("click", fetchHeartRate);
-
-  function getZone(bpm) {
-    if (bpm < 60)  return "Resting";
-    if (bpm < 100) return "Normal";
-    if (bpm < 140) return "Cardio";
-    return "Peak";
-  }
-
-  async function fetchHeartRate() {
+  document.getElementById("fetchHPBtn").addEventListener("click", fetchHeartPoints);
+  async function fetchHeartPoints() {
     if (!accessToken) return showAlert("Connect Google Fit first.", "error");
-    showAlert("Syncing heart rate…", "info");
+    showAlert("Syncing Heart Points…", "info");
     try {
-      const res  = await fetch(`http://localhost:3000/api/heart_rate?access_token=${accessToken}`);
-      if (!res.ok) throw new Error();
+      const res = await fetch(`http://localhost:3000/api/heart_points?access_token=${accessToken}`);
+      if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      const hrs  = data.heartRates;
-
-      if (!hrs || !hrs.length) return showAlert("No heart rate data found.", "info");
-
-      const latest = hrs[hrs.length - 1];
-      const avg    = Math.round(hrs.reduce((s,r) => s + r.bpm, 0) / hrs.length);
-
-      document.getElementById("currentBPM").textContent = latest.bpm + " bpm";
-      document.getElementById("avgBPM").textContent     = avg + " bpm";
-      document.getElementById("zoneDisplay").textContent = getZone(latest.bpm);
-      localStorage.setItem("lastBPM", latest.bpm);
-
-      renderChart(hrs);
-      renderHistory(hrs);
-      showAlert("Heart rate synced!", "success");
-    } catch {
-      showAlert("Sync failed. Check server & token.", "error");
+      localStorage.setItem("heartPointsData", JSON.stringify(data));
+      localStorage.setItem("lastHeartPoints", data.today);
+      renderData(data);
+      showAlert("Heart Points synced! ❤️", "success");
+    } catch(err) {
+      console.error(err);
+      showAlert("Sync failed. Make sure server is running.", "error");
     }
   }
-
-  function renderChart(data) {
-    const ctx = document.getElementById("heartRateChart").getContext("2d");
+  function renderData(data) {
+    const today     = data.today         || 0;
+    const weekTotal = data.weekTotal     || 0;
+    const history   = data.weeklyHistory || [];
+    const dailyGoal = data.whoGoalDaily  || 22;
+    const weekGoal  = data.whoGoalWeekly || 150;
+    const pct = Math.min(today / dailyGoal, 1);
+    document.getElementById("hpRing").style.strokeDasharray  = CIRC;
+    document.getElementById("hpRing").style.strokeDashoffset = CIRC * (1 - pct);
+    document.getElementById("hpTodayVal").textContent = today;
+    document.getElementById("hpPct").textContent      = Math.round(pct * 100) + "% of goal";
+    document.getElementById("hpWeekTotal").textContent = weekTotal;
+    document.getElementById("hpWeekPct").textContent   = Math.round(Math.min(weekTotal / weekGoal, 1) * 100) + "%";
+    document.getElementById("whoFill").style.width     = Math.min((weekTotal / weekGoal) * 100, 100) + "%";
+    document.getElementById("whoBarLabel").textContent = `${weekTotal} / ${weekGoal}`;
+    document.getElementById("tileToday").textContent   = today;
+    const best = history.length ? Math.max(...history.map(d => d.points)) : 0;
+    const avg  = history.length ? Math.round(history.reduce((s,d) => s + d.points, 0) / history.length) : 0;
+    document.getElementById("tileBestDay").textContent = best;
+    document.getElementById("tileAvg").textContent     = avg;
+    const status = getStatus(today);
+    document.getElementById("hpStatusCard").className  = `hp-status-card ${status.cls}`;
+    document.getElementById("hpStatusIcon").textContent= status.icon;
+    document.getElementById("hpStatusText").textContent= status.text;
+    renderChart(history, dailyGoal);
+  }
+  function renderChart(history, dailyGoal) {
+    const ctx = document.getElementById("hpChart").getContext("2d");
     if (chartInst) chartInst.destroy();
+    const todayLabel = new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
     chartInst = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: data.map(r => r.time),
-        datasets: [{
-          label: "BPM",
-          data: data.map(r => r.bpm),
-          backgroundColor: "rgba(239,68,68,0.15)",
-          borderColor: "#ef4444",
-          borderWidth: 2,
-          pointBackgroundColor: "#ef4444",
-          fill: true,
-          tension: 0.3
+      type:"bar",
+      data:{
+        labels: history.map(h => h.day),
+        datasets:[{
+          label:"Heart Points",
+          data: history.map(h => h.points),
+          backgroundColor: history.map(h => h.day===todayLabel ? "rgba(245,158,11,.5)" : "rgba(239,68,68,.3)"),
+          borderColor:     history.map(h => h.day===todayLabel ? "#f59e0b" : "#ef4444"),
+          borderWidth:2, borderRadius:8, borderSkipped:false,
+        },{
+          label:"Daily WHO Goal (22)",
+          data: history.map(() => dailyGoal),
+          type:"line", borderColor:"rgba(16,185,129,.5)",
+          borderDash:[5,5], borderWidth:2, pointRadius:0, fill:false,
         }]
       },
-      options: {
-        responsive: true,
-        plugins: { legend: { labels: { color: "#94a3b8" } } },
-        scales: {
-          x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.04)" } },
-          y: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.06)" } }
+      options:{
+        responsive:true,
+        plugins:{ legend:{ labels:{ color:"#94a3b8" } } },
+        scales:{
+          x:{ ticks:{color:"#94a3b8"}, grid:{color:"rgba(255,255,255,0.04)"} },
+          y:{ beginAtZero:true, ticks:{color:"#94a3b8"}, grid:{color:"rgba(255,255,255,0.06)"}, suggestedMax:50 }
         }
       }
     });
   }
-
-  function renderHistory(data) {
-    const list = document.getElementById("heartRateList");
-    list.innerHTML = data.slice().reverse().map(r =>
-      `<li class="history-item"><span>${r.time}</span><span>${r.bpm} bpm</span></li>`
-    ).join("");
-  }
-
   document.getElementById("logoutBtn").addEventListener("click", () => {
     localStorage.setItem("isLoggedIn","false");
     window.location.href = "index.html";
